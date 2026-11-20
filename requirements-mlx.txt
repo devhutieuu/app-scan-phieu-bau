@@ -1,0 +1,8 @@
+# Môi trường .venv-mlx: dịch vụ Qwen2.5-VL đọc họ tên (cổng 8767), chỉ chạy trên chip Apple Silicon
+mlx
+mlx-vlm
+huggingface-hub
+transformers
+numpy
+opencv-python
+pillow

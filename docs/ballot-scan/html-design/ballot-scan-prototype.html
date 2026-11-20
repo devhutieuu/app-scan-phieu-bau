@@ -1,0 +1,1305 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kiểm phiếu · Bản mẫu tương tác</title>
+<style>
+:root{
+  --void:#ffffff;--carbon:#f7f8f8;--obsidian:#f2f3f4;--graphite:#e5e5e6;--smoke:#d0d6e0;
+  --ash:#8a8f98;--fog:#62666d;--mist:#23252a;--bone:#383b3f;--paper:#08090a;
+  --lime:#e4f222;--green:#27a644;--coral:#eb5757;--teal:#02b8cc;--iris:#6366f1;--lav:#8b5cf6;
+  /* chữ trên badge ở nền sáng = sắc đậm của Pulse Green / Coral Red / Iris / Lavender (DESIGN.md) */
+  --ok-ink:#1f7a35;--bad-ink:#b93c3c;--iris-ink:#4f46e5;--lav-ink:#6d3fd6;
+  --font:'Inter Variable','Inter',ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --mono:'Berkeley Mono','JetBrains Mono','IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --shadow-subtle:#e5e5e6 0 0 0 1px inset;
+  --shadow-xl:rgba(8,9,10,.12) 0 2px 4px 0;
+  --shadow-cta:rgba(8,9,10,.12) 0 0 0 1px;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--void);color:var(--mist);font-family:var(--font);font-size:14px;line-height:1.5;
+  font-feature-settings:"cv01" on,"ss03" on,"zero" on;-webkit-font-smoothing:antialiased;overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+.mono{font-family:var(--mono);letter-spacing:-.013em}
+.muted{color:var(--fog)}
+.app{display:grid;grid-template-rows:auto 1fr;height:100vh}
+
+/* top bar */
+.top{display:flex;align-items:center;gap:16px;padding:8px 16px;border-bottom:1px solid var(--graphite)}
+.brand{display:flex;align-items:center;gap:8px;color:var(--paper);font-weight:510;font-size:15px;white-space:nowrap}
+.brand svg{flex:none}
+.session{display:flex;flex-direction:column;min-width:0}
+.session b{font-weight:400;color:var(--mist);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.session span{font-size:12px;color:var(--fog)}
+.stats{display:flex;gap:2px;margin-left:auto}
+.stat{display:flex;flex-direction:column;align-items:flex-end;padding:2px 12px;border-left:1px solid var(--graphite)}
+.stat:first-child{border-left:0}
+.stat .v{color:var(--paper);font-size:16px;font-weight:510;font-variant-numeric:tabular-nums;line-height:1.2}
+.stat .l{font-size:11px;color:var(--fog);white-space:nowrap}
+.stat.bad .v{color:var(--bad-ink)}
+.nav{display:flex;gap:8px}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;background:transparent;border:1px solid var(--graphite);color:var(--mist);
+  border-radius:6px;padding:6px 12px;font-size:13px;cursor:pointer;white-space:nowrap}
+.btn:hover:not(:disabled){background:rgba(8,9,10,.04);border-color:var(--smoke)}
+.btn:disabled{color:var(--ash);cursor:not-allowed}
+.btn-primary{background:var(--lime);color:#08090a;border:0;font-weight:510;font-size:14px;padding:9px 16px;letter-spacing:-.011em;box-shadow:var(--shadow-cta)}
+.btn-primary:hover:not(:disabled){background:#eef54a}
+.btn-primary:disabled{background:var(--graphite);color:var(--ash)}
+/* Xác nhận phiếu không hợp lệ: nút chính đổi sang đỏ để không bấm theo quán tính. */
+.btn-primary.btn-danger:not(:disabled){background:var(--coral);color:#fff;box-shadow:none}
+.btn-primary.btn-danger:hover:not(:disabled){background:#e04848}
+.btn-white{background:#08090a;color:#fff;border:0;font-weight:510}
+.btn-white:hover:not(:disabled){background:#23252a}
+.btn-sm{padding:3px 10px;font-size:12px}
+.kbd{font-family:var(--mono);font-size:11px;line-height:16px;border:1px solid var(--smoke);border-radius:4px;padding:0 5px;color:var(--fog)}
+.btn-primary .kbd{border-color:rgba(8,9,10,.25);color:rgba(8,9,10,.65)}
+.btn-text{border-color:transparent;color:var(--fog)}
+.btn-text:hover:not(:disabled){background:transparent;border-color:transparent;color:var(--paper)}
+.btn-icon{padding:6px 8px}
+.link{background:none;border:0;padding:0;color:var(--fog);text-decoration:underline;cursor:pointer;font-size:12px}
+.link:hover{color:var(--paper)}
+.okmark{color:var(--ash);font-size:13px}
+.row .sub .sm{font-size:11px;color:var(--ash)}
+.infoline{margin-top:10px;font-size:11px;color:var(--ash)}
+.simwrap{position:relative}
+.pop{position:absolute;right:0;bottom:calc(100% + 6px);width:260px;background:var(--obsidian);box-shadow:var(--shadow-subtle),var(--shadow-xl);border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:10px;z-index:10}
+.pop[hidden]{display:none}
+.pop .check{font-size:13px}
+.badge-count{font-family:var(--mono);font-size:11px;background:rgba(8,9,10,.06);border-radius:4px;padding:0 5px;color:var(--fog)}
+
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;line-height:18px;border-radius:4px;padding:0 6px;background:rgba(8,9,10,.05);color:var(--fog);white-space:nowrap}
+.chip.ok{background:rgba(39,166,68,.12);color:var(--ok-ink)}
+.chip.bad{background:rgba(235,87,87,.12);color:var(--bad-ink)}
+.chip.info{background:rgba(99,102,241,.12);color:var(--iris-ink)}
+.chip.dec{background:rgba(139,92,246,.12);color:var(--lav-ink)}
+.pill{border-radius:9999px;padding:2px 10px}
+
+/* split */
+.split{display:flex;min-height:0}
+.pane{display:flex;flex-direction:column;min-width:0;min-height:0}
+#camPane{flex:0 0 38%}
+#ballotPane{flex:1 1 0}
+#listPane{display:none}
+/* Máy tính chỉ duyệt (không dùng camera): danh sách phiếu chiếm màn chính, phiếu mở lại để sửa hiện bên phải */
+body.nocam #camPane,body.nocam #divider{display:none!important}
+body.nocam #listPane{display:flex;flex:1 1 0;border-right:1px solid var(--graphite)}
+body.nocam #ballotPane{display:none}
+body.nocam #btnList{display:none}
+body.nocam.has-pending #ballotPane{display:flex;flex:0 0 52%}
+#listPane .list-grid{flex:1;min-height:0}
+#listPane .list-wrap{flex:1;min-height:0;display:flex}
+.divider{flex:0 0 9px;cursor:col-resize;position:relative;touch-action:none}
+.divider::before{content:"";position:absolute;left:4px;top:0;bottom:0;width:1px;background:var(--graphite)}
+.divider:hover::before,.divider.drag::before{background:var(--smoke);left:3px;width:3px}
+.divider .grip{position:absolute;top:50%;left:1px;width:7px;height:36px;margin-top:-18px;border-radius:9999px;background:var(--obsidian);box-shadow:var(--shadow-subtle)}
+.pane-head{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--graphite);min-height:49px}
+.pane-title{color:var(--paper);font-weight:510;font-size:13px}
+.spacer{flex:1}
+select.sel{background:rgba(8,9,10,.02);border:1px solid var(--smoke);border-radius:6px;padding:4px 8px;font-size:12px;color:var(--mist);max-width:220px}
+
+/* camera */
+.cam-stage{flex:1;min-height:0;container-type:size;display:grid;place-items:center;padding:16px}
+.phone{height:min(100cqh,calc(100cqw * 4 / 3));aspect-ratio:3/4;border-radius:6px;background:#111;box-shadow:0 0 0 1px var(--smoke);position:relative}
+.screen{position:relative;width:100%;height:100%;border-radius:6px;overflow:hidden;background:#111}
+.screen canvas{width:100%;height:100%;display:block}
+.live{position:absolute;top:10px;left:10px;font-size:11px;color:#fff;background:rgba(8,9,10,.6);border-radius:9999px;padding:2px 9px;display:flex;align-items:center;gap:6px}
+.live i{width:6px;height:6px;border-radius:50%;background:var(--coral)}
+.hud{position:absolute;left:10px;right:10px;bottom:10px;background:rgba(8,9,10,.74);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:12px;padding:10px 12px}
+.hud .msg{color:#fff;font-size:15px;font-weight:510;line-height:1.3}
+.hud .sub{color:#d0d6e0;font-size:12px;margin-top:2px}
+.hud .prog{height:3px;background:rgba(255,255,255,.25);border-radius:9999px;margin-top:8px;overflow:hidden}
+.hud .prog i{display:block;height:100%;width:0;background:#fff}
+.hud.done .prog i{background:var(--green)}
+.meter{background:rgba(8,9,10,.02);box-shadow:var(--shadow-subtle);border-radius:6px;padding:6px 10px}
+.meter .l{font-size:11px;color:var(--fog);display:flex;justify-content:space-between}
+.meter .l b{font-weight:400;color:var(--mist);font-family:var(--mono)}
+.meter .bar{height:3px;background:var(--graphite);border-radius:9999px;margin-top:5px;overflow:hidden}
+.meter .bar i{display:block;height:100%;background:var(--mist);width:0}
+.cam-foot{position:relative;display:flex;align-items:center;gap:8px;padding:10px 16px;border-top:1px solid var(--graphite);flex-wrap:wrap}
+.check{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--mist);cursor:pointer}
+.check input{accent-color:var(--mist)}
+.lbl{font-size:12px;color:var(--fog)}
+
+/* ballot */
+.ballot-scroll{flex:1;min-height:0;overflow:auto;padding:16px}
+.sheet{max-width:780px;margin:0 auto;background:var(--carbon);border-radius:12px;box-shadow:var(--shadow-subtle);padding:20px 24px 16px;position:relative}
+.sheet-title{text-align:center;color:var(--paper);font-size:17px;font-weight:510;letter-spacing:.02em}
+.sheet-sub{text-align:center;color:var(--fog);font-size:12px;margin:2px 0 14px}
+.sheet-head,.row{display:grid;grid-template-columns:28px 100px minmax(0,1fr);gap:10px;align-items:center}
+.sheet-head{font-size:11px;color:var(--fog);padding:0 0 6px}
+.row{padding:8px 0;border-top:1px solid var(--graphite)}
+.row.need{box-shadow:inset 2px 0 0 var(--coral);margin-left:-12px;padding-left:12px}
+.row .ln{color:var(--fog);font-family:var(--mono);font-size:12px;text-align:center}
+.row .tag{display:flex;justify-content:flex-end;align-items:center;gap:6px}
+.row .sub{grid-column:2/4;font-size:12px;color:var(--fog);margin-top:-2px}
+.row .sub .warn{color:var(--mist)}
+.row .decide{grid-column:2/4;display:flex;gap:6px;flex-wrap:wrap}
+.opt{background:rgba(8,9,10,.04);border:1px solid var(--graphite);border-radius:9999px;padding:3px 12px;font-size:12px;color:var(--mist);cursor:pointer}
+.opt:hover{border-color:var(--mist)}
+.opt .mono{color:var(--fog);margin-right:4px}
+.opt.void{color:var(--fog)}
+.decide .lb{font-size:12px;color:var(--fog);align-self:center;padding:0 2px}
+.inp{width:100%;height:36px;background:rgba(8,9,10,.02);border:1px solid var(--smoke);border-radius:6px;padding:0 12px;color:var(--mist);outline:none}
+.inp:focus{border-color:var(--mist)}
+.stt{position:relative;width:100px}
+.stt::before,.stt::after{content:"";position:absolute;top:7px;bottom:7px;width:1px;background:rgba(8,9,10,.08);pointer-events:none}
+.stt::before{left:33.33%}.stt::after{left:66.66%}
+.stt .inp{font-family:var(--mono);font-size:17px;text-align:left;letter-spacing:calc(33.33px - 1ch);padding:0 0 0 calc((33.33px - 1ch) / 2)}
+.row.void .inp{text-decoration:line-through;color:var(--ash)}
+.row.empty .inp::placeholder{color:var(--smoke)}
+.x{background:none;border:0;color:var(--ash);cursor:pointer;font-size:13px;padding:2px 4px;border-radius:4px}
+.x:hover{color:var(--mist);background:rgba(8,9,10,.05)}
+.flags{margin-top:12px;display:flex;flex-direction:column;gap:6px}
+.flag{display:flex;align-items:flex-start;gap:8px;font-size:12px;padding:8px 10px;border-radius:6px;background:rgba(8,9,10,.02);box-shadow:var(--shadow-subtle)}
+.flag .dot{width:6px;height:6px;border-radius:50%;margin-top:6px;flex:none;background:var(--fog)}
+.flag.block .dot{background:var(--coral)}
+.flag.decide .dot{background:var(--lav)}
+.flag.info .dot{background:var(--iris)}
+.flag .t{flex:1}
+.flag .acts{display:flex;gap:6px}
+.rescan-mask{position:absolute;inset:0;border-radius:12px;background:rgba(255,255,255,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:24px}
+.rescan-mask b{color:var(--paper);font-weight:510;font-size:15px}
+.empty-state{max-width:420px;margin:12vh auto 0;text-align:center}
+.empty-state h3{color:var(--paper);font-weight:510;font-size:20px;letter-spacing:-.012em;margin:16px 0 6px}
+.empty-state p{color:var(--fog);margin:0 0 20px}
+.keys{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;text-align:left;font-size:13px;max-width:300px;margin:0 auto;color:var(--fog)}
+.foot{display:flex;align-items:center;gap:8px;padding:12px 16px;border-top:1px solid var(--graphite)}
+.concl{display:flex;flex-direction:column;min-width:0;margin-right:auto}
+.concl b{font-weight:510;color:var(--paper);font-size:14px}
+.concl b.ok{color:var(--ok-ink)}.concl b.bad{color:var(--bad-ink)}
+.concl span{font-size:12px;color:var(--fog)}
+.banner{max-width:780px;margin:0 auto 12px;font-size:12px;padding:8px 12px;border-radius:6px;background:rgba(99,102,241,.1);color:var(--iris-ink);box-shadow:inset 0 0 0 1px rgba(99,102,241,.25)}
+
+/* overlay */
+.ov{position:fixed;inset:0;background:rgba(8,9,10,.35);display:none;z-index:20;padding:40px 24px}
+.ov.open{display:flex;justify-content:center;align-items:flex-start}
+.panel{background:var(--carbon);box-shadow:var(--shadow-subtle),var(--shadow-xl);border-radius:12px;width:min(1180px,100%);max-height:calc(100vh - 80px);display:flex;flex-direction:column;overflow:hidden}
+.panel-head{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--graphite)}
+.panel-head h2{margin:0;font-size:16px;font-weight:510;color:var(--paper);letter-spacing:-.01em}
+.panel-body{flex:1;min-height:0;overflow:auto}
+.tabs{display:flex;gap:2px}
+.tab{background:none;border:0;padding:4px 10px;border-radius:6px;font-size:13px;color:var(--fog);cursor:pointer}
+.tab:hover{color:var(--mist)}
+.tab.on{background:rgba(8,9,10,.06);color:var(--paper)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{color:var(--fog);font-weight:400;font-size:12px;text-align:left;padding:8px 12px;border-bottom:1px solid var(--graphite);position:sticky;top:0;background:var(--carbon);z-index:1}
+td{padding:7px 12px;border-bottom:1px solid var(--graphite);vertical-align:middle}
+tr.click{cursor:pointer}
+tr.click:hover td{background:rgba(8,9,10,.02)}
+tr.sel td{background:rgba(8,9,10,.04)}
+/* Kết quả (theo DESIGN.md: chỉ thang xám, lime chỉ cho nút chính): nhóm dẫn đầu nền xám nhạt + chữ đậm, kẻ ngăn sau người cuối nhóm */
+table.rank td.nm{color:var(--fog)}
+table.rank tr.lead td{background:var(--obsidian)}
+table.rank tr.lead td.nm{color:var(--paper);font-weight:510}
+table.rank tr.edge td{border-bottom:1px solid var(--fog)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.thumb{width:30px;height:42px;object-fit:cover;border-radius:2px;display:block;box-shadow:0 0 0 1px var(--graphite)}
+.list-bar{padding:10px 20px;display:flex;gap:2px;align-items:center;border-bottom:1px solid var(--graphite);position:sticky;top:0;background:var(--carbon);z-index:2}
+.list-bar select.sel{margin-left:8px}
+.list-bar .tab,.list-bar label{white-space:nowrap}
+.tab.warnc{color:var(--paper);font-weight:510}
+th.sortable{cursor:pointer;user-select:none;top:49px}th.sortable:hover{color:var(--mist)}th.sortable.on{color:var(--paper)}
+.list-grid th{top:49px}
+th.flagc,td.flagc{width:28px;padding-right:0;text-align:center}
+.fl{font-size:15px}.fl.on{color:var(--paper)}.fl.done{color:var(--ash)}
+tr.flagged td{background:var(--obsidian)}
+.flagcard{border-radius:6px;padding:10px 12px;margin-bottom:12px;background:var(--obsidian);box-shadow:var(--shadow-subtle);font-size:13px}
+.flagcard b{color:var(--paper);font-weight:510}
+.flagcard .fnote{margin:6px 0 10px;color:var(--mist);font-size:14px}
+.flagcard .acts{display:flex;gap:8px}
+.flagcard.done{background:rgba(8,9,10,.03);box-shadow:none;color:var(--fog)}
+.badge-flag{font-size:11px;background:rgba(8,9,10,.06);color:var(--paper);border-radius:4px;padding:0 5px;margin-left:4px}
+.devdot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:6px;vertical-align:1px}
+.devdot.off{background:var(--smoke)}
+#btnDev.warn{color:var(--bad-ink)}
+.devtbl td{padding:8px 10px}
+#devLine{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1;text-align:right}
+.modal:has(#devModal){width:min(720px,94vw)}
+.devtbl .warnc{color:var(--bad-ink);font-size:12px}
+.qrbox{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px}
+.qrbox img{width:260px;height:260px;image-rendering:pixelated;border-radius:6px;box-shadow:0 0 0 1px var(--graphite);background:#fff}
+.qrbox .url{font-family:var(--mono);font-size:15px;color:var(--paper);user-select:all}
+.qrbox .hint{font-size:12px;color:var(--fog);max-width:340px}
+.qr-empty{padding:40px 20px}
+.list-grid{display:grid;grid-template-columns:minmax(0,1fr) 440px;height:100%;min-height:0}
+.list-grid>div{overflow:auto;min-height:0}
+.detail{border-left:1px solid var(--graphite);padding:16px 20px}
+.detail img.comp{width:100%;border-radius:6px;box-shadow:0 0 0 1px var(--graphite);cursor:zoom-in;display:block}
+.detail h3{margin:0 0 4px;color:var(--paper);font-weight:510;font-size:15px}
+.detail .sect{margin-top:16px}
+.detail .sect h4{margin:0 0 6px;font-size:11px;color:var(--fog);font-weight:400;text-transform:uppercase;letter-spacing:.06em}
+.vlist{margin:0;padding:0;list-style:none;font-size:13px}
+.vlist li{padding:3px 0;display:flex;gap:8px}
+.hist{margin:0;padding:0;list-style:none;font-size:12px;color:var(--fog)}
+.hist li{padding:3px 0;display:flex;gap:10px}
+.hist li .mono{color:var(--ash);flex:none}
+.zoomed{position:fixed;inset:0;z-index:40;background:rgba(8,9,10,.55);display:flex;align-items:center;justify-content:center;padding:24px;cursor:zoom-out}
+.zoomed img{max-width:100%;max-height:100%;border-radius:6px}
+.res-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:16px 20px}
+.card{background:rgba(8,9,10,.02);box-shadow:var(--shadow-subtle);border-radius:6px;padding:10px 12px}
+.card .l{font-size:12px;color:var(--fog)}
+.card .v{font-size:24px;color:var(--paper);font-weight:400;letter-spacing:-.012em;font-variant-numeric:tabular-nums}
+.card .s{font-size:11px;color:var(--fog)}
+.card input{width:100%;background:transparent;border:0;border-bottom:1px solid var(--smoke);font-size:22px;color:var(--paper);outline:none;padding:0;font-variant-numeric:tabular-nums}
+.note{margin:0 20px 12px;font-size:12px;color:var(--fog)}
+.verdict{margin:0 20px 12px;padding:10px 12px;border-radius:6px;font-size:13px;color:var(--mist);box-shadow:var(--shadow-subtle)}
+.pbar{position:relative;height:6px;background:var(--graphite);border-radius:9999px;width:100%;min-width:140px}
+.pbar i{position:absolute;left:0;top:0;bottom:0;border-radius:9999px;background:var(--mist)}
+.pbar i.win{background:var(--green)}
+.pbar .th{position:absolute;top:-4px;bottom:-4px;width:1px;background:var(--fog)}
+.form{padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:16px 24px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:12px;color:var(--fog)}
+.field .inp,.field select,.field textarea{background:rgba(8,9,10,.02);border:1px solid var(--smoke);border-radius:6px;padding:8px 12px;color:var(--mist);outline:none}
+.field textarea{min-height:260px;font-family:var(--mono);font-size:13px;resize:vertical}
+.field .hint{font-size:12px;color:var(--ash)}
+.span2{grid-column:1/3}
+.panel-foot{display:flex;gap:8px;justify-content:flex-end;align-items:center;padding:12px 20px;border-top:1px solid var(--graphite)}
+
+/* modal + toast */
+.modal-wrap{position:fixed;inset:0;z-index:50;background:rgba(8,9,10,.35);display:none;align-items:center;justify-content:center}
+.modal-wrap.open{display:flex}
+.modal{width:min(460px,92vw);background:var(--obsidian);border-radius:12px;box-shadow:var(--shadow-subtle),var(--shadow-xl);padding:20px}
+.modal h3{margin:0 0 4px;color:var(--paper);font-weight:510;font-size:16px}
+.modal p{margin:0 0 14px;color:var(--fog);font-size:13px}
+.radios{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.radios label{display:flex;gap:8px;align-items:center;font-size:13px;padding:7px 10px;border-radius:6px;box-shadow:var(--shadow-subtle);cursor:pointer}
+.radios input{accent-color:var(--mist)}
+.modal textarea{width:100%;min-height:70px;background:rgba(8,9,10,.02);border:1px solid var(--smoke);border-radius:6px;padding:8px 10px;color:var(--mist);outline:none;resize:vertical}
+.modal .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%) translateY(20px);opacity:0;transition:.18s;z-index:60;background:var(--obsidian);box-shadow:var(--shadow-subtle),var(--shadow-xl);border-radius:6px;padding:8px 8px 8px 14px;display:flex;gap:12px;align-items:center;font-size:13px;color:var(--mist);pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+
+/* ===== Dễ đọc cho người lớn tuổi: tương phản và bố cục (giữ nguyên cỡ chữ theo DESIGN.md) ===== */
+.sheet-head,.row{grid-template-columns:28px 100px minmax(0,1fr)}
+.row .tag{flex-wrap:wrap}
+.row.need{box-shadow:inset 3px 0 0 var(--coral)}
+.row .sub{color:var(--mist)}.row .sub .warn{color:var(--paper);font-weight:510}.row .sub .sm{color:var(--fog)}
+.row.empty .inp::placeholder{color:var(--fog)}
+.opt,.opt.void{color:var(--paper);background:rgba(8,9,10,.04);white-space:normal;text-align:left}
+.hl{outline:3px solid var(--paper);outline-offset:2px}
+.okmark{color:var(--mist)}
+.infoline{color:var(--fog)}
+.btn:disabled{color:var(--fog);opacity:.55}
+.btn-text{border-color:var(--graphite);color:var(--mist)}
+.field label{color:var(--mist)}.field .hint{color:var(--fog)}
+.hist li .mono{color:var(--fog)}
+.link{color:var(--mist)}
+.empty-state p,.modal p{color:var(--mist)}
+.tipline{font-size:12px;color:var(--fog);max-width:420px;margin:0 auto}
+
+.inp.doubt{background:var(--obsidian);border-color:var(--fog);border-style:dashed}
+.inp.doubt:focus{border-color:var(--iris);border-style:solid}
+.stt .inp{background:#fff;border:1.5px solid var(--ash);cursor:text}
+.stt .inp.doubt{background:var(--obsidian);border-color:var(--fog);border-style:dashed}
+.stt .inp:focus{border-color:var(--iris);box-shadow:0 0 0 2px rgba(99,102,241,.18)}
+.stt .inp.edited{border-left:4px solid var(--iris)}
+.stt .pen{position:absolute;right:-5px;top:-7px;width:16px;height:16px;line-height:16px;text-align:center;font-size:11px;background:#fff;color:var(--fog);border-radius:50%;box-shadow:0 0 0 1px var(--smoke);pointer-events:none;z-index:2}
+.stt .edtag{position:absolute;left:0;bottom:-7px;font-size:10px;line-height:1;padding:2px 5px;border-radius:6px;background:var(--iris);color:#fff;pointer-events:none;z-index:2}
+.crop[data-i]{cursor:pointer}
+.row .fix{grid-column:2/4;font-size:12px;color:var(--fog);margin-top:-2px}
+.row .fix.ed{color:var(--mist)}
+.row .fix .lnk{background:none;border:0;padding:0 0 0 8px;color:var(--mist);text-decoration:underline;cursor:pointer;font:inherit}
+.row .sub{display:flex;align-items:center;gap:12px}
+.crop{height:44px;width:auto;max-width:72%;border-radius:4px;box-shadow:0 0 0 1px var(--smoke);object-fit:contain;background:#fff}
+.row .tag{flex-direction:column;align-items:flex-end;gap:2px}
+.pop.bad{width:auto}
+#badPop{width:240px;gap:8px}#badPop .btn{justify-content:flex-start;width:100%}
+
+/* ===== Điện thoại (< 900px): xếp dọc, không cuộn ngang ===== */
+@media (max-width:899px){
+  html,body{height:auto;min-height:100%}
+  body{overflow-x:hidden;overflow-y:auto;font-size:15px}
+  .app{display:block;height:auto}
+  .top{flex-wrap:wrap;gap:8px 12px;padding:8px 12px}
+  .brand{flex:none}
+  .session{flex:1 1 140px;min-width:0}
+  .session b{white-space:normal;font-size:15px;overflow-wrap:anywhere}
+  .session span{font-size:13px;overflow-wrap:anywhere}
+  .stats{flex:1 1 100%;margin-left:0;flex-wrap:wrap;gap:4px 0}
+  .stat{align-items:flex-start;padding:2px 12px 2px 0;margin-right:12px}
+  .stat .v{font-size:18px}.stat .l{font-size:13px;white-space:normal}
+  .nav{flex:1 1 100%;flex-wrap:wrap;gap:6px}
+  .nav .btn{flex:1 1 90px;justify-content:center;min-height:44px;font-size:15px}
+  .btn{font-size:15px}
+  .btn-sm{font-size:14px;padding:6px 12px;min-height:40px}
+  .split{display:block}
+  .divider{display:none}
+  #camPane,#ballotPane{flex:none!important;display:flex;width:100%;min-height:0}
+  #camPane{border-bottom:1px solid var(--graphite)}
+  .pane-head{flex-wrap:wrap;padding:8px 12px}
+  select.sel{max-width:100%;flex:1 1 160px;font-size:15px;padding:8px}
+  .cam-stage{display:block;container-type:normal;flex:none;padding:12px}
+  .phone{width:min(100%,calc(60vh * 3 / 4));height:auto;aspect-ratio:3/4;margin:0 auto}
+  .has-pending .cam-stage{display:none}
+  .cam-foot{padding:8px 12px;gap:10px}
+  .cam-foot .btn-sm{min-height:44px}
+  .check{font-size:15px}
+  .lbl{font-size:13px}
+  .ballot-scroll{flex:none;overflow:visible;padding:12px 12px 24px}
+  .sheet{padding:14px 12px 12px;max-width:100%}
+  .sheet-sub{font-size:14px}
+  .sheet-head,.row{grid-template-columns:28px 100px minmax(0,1fr);gap:6px 10px}
+  .sheet-head{font-size:13px}
+  .row .tag{grid-column:2/4;flex-direction:row;justify-content:flex-start;align-items:center;flex-wrap:wrap;gap:6px}
+  .row .tag .chip{font-size:13px}
+  .okmark{font-size:14px}
+  .row .sub{grid-column:1/4;flex-direction:column;align-items:stretch;gap:6px;font-size:15px;margin-top:0}
+  .crop{width:100%;max-width:100%;height:auto!important;max-height:90px;object-fit:contain}
+  .row .fix{grid-column:1/4;font-size:15px;margin-top:0}
+  .row .fix .lnk{display:inline-block;padding:8px 0 8px 8px;min-height:40px}
+  .row .decide{grid-column:1/4}
+  .row .nm{font-size:16px!important;overflow-wrap:anywhere}
+  .stt{width:100px}
+  .stt .inp{height:48px;min-height:48px;font-size:22px}
+  .flag,.banner{font-size:15px}
+  .flag{flex-wrap:wrap}
+  .foot{position:sticky;bottom:0;z-index:15;background:#fff;border-top:1px solid var(--graphite);flex-wrap:wrap;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom))}
+  .foot .concl{flex:1 1 100%;margin-right:0}
+  .foot .concl b{font-size:16px}.foot .concl span{font-size:14px;overflow-wrap:anywhere}
+  .foot .btn{min-height:48px;justify-content:center;font-size:15px;padding:8px 10px}
+  .foot>.btn,.foot>.simwrap{flex:1 1 90px}
+  .foot .simwrap .btn{width:100%}
+  .foot>.btn-primary{flex:2 1 150px;font-size:16px}
+  .pop,#badPop{width:min(260px,calc(100vw - 24px))}
+  .ov{padding:0}
+  .panel{width:100%;max-width:100vw;max-height:100vh;height:100vh;border-radius:0}
+  .panel-head{flex-wrap:wrap;padding:10px 12px}
+  .panel-body{overflow:auto}
+  .panel-body table{display:block;overflow-x:auto;max-width:100%}
+  .list-grid{grid-template-columns:minmax(0,1fr);height:auto}
+  .list-grid>div{overflow-x:auto;max-width:100%}
+  .detail{border-left:0;border-top:1px solid var(--graphite);padding:12px}
+  .res-grid{grid-template-columns:repeat(2,minmax(0,1fr));padding:12px}
+  .form{grid-template-columns:minmax(0,1fr);padding:12px}
+  .span2{grid-column:1}
+  .field .inp,.field select,.field textarea{font-size:16px;max-width:100%}
+  .note,.verdict{margin-left:12px;margin-right:12px}
+  .panel-foot{flex-wrap:wrap;padding:10px 12px}
+  .modal{width:100%;max-width:100vw;margin:0 8px}
+  .empty-state{margin-top:4vh}
+  .toast{max-width:calc(100vw - 24px)}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="1.5" y="1.5" width="15" height="15" rx="3" stroke="#fff"/><path d="M5 9.2l2.6 2.6L13 6.4" stroke="#fff" stroke-width="1.4"/></svg>
+      Kiểm phiếu
+    </div>
+    <div class="session"><b id="sessName"></b><span id="sessSub"></span></div>
+    <div class="stats" id="stats"></div>
+    <div class="nav">
+      <button class="btn" id="btnList">Danh sách <span class="badge-count" id="listCount">0</span><span class="badge-flag" id="flagCount" title="Phiếu điện thoại gắn cờ, chờ máy tính duyệt" hidden></span></button>
+      <button class="btn" id="btnDev" title="Các máy đang kết nối với máy chủ" hidden></button>
+      <button class="btn" id="btnQr" title="Mã QR để điện thoại vào trang quét"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1.5" y="1.5" width="5" height="5"/><rect x="9.5" y="1.5" width="5" height="5"/><rect x="1.5" y="9.5" width="5" height="5"/><path d="M9.5 9.5h2v2h-2zM12.5 12.5h2v2h-2zM12.5 9.5h2M9.5 12.5v2"/></svg> QR</button>
+      <button class="btn" id="btnRes">Kết quả</button>
+      <button class="btn" id="btnSet"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><circle cx="8" cy="8" r="2.4"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4"/></svg> Thiết lập</button>
+    </div>
+  </header>
+
+  <main class="split" id="split">
+    <section class="pane" id="listPane"></section>
+    <section class="pane" id="camPane">
+      <div class="pane-head">
+        <span class="pane-title">Camera</span><span class="lbl" id="ocrLbl"></span>
+        <span class="spacer"></span>
+        <select class="sel" id="camSource"><option value="ask">Chọn camera…</option></select>
+      </div>
+      <div class="cam-stage">
+        <div class="phone"><div class="screen">
+          <canvas id="camCanvas"></canvas>
+          <div class="live"><i></i><span id="liveLbl">Camera</span></div>
+          <div class="hud" id="hud"><div class="msg" id="hudMsg">Đang chờ phiếu…</div><div class="sub" id="hudSub"></div><div class="prog"><i id="hudProg"></i></div></div>
+        </div></div>
+      </div>
+      <div class="cam-foot" id="camFoot"></div>
+    </section>
+
+    <div class="divider" id="divider" title="Kéo để đổi tỉ lệ · nhấp đúp để về mặc định"><div class="grip"></div></div>
+
+    <section class="pane" id="ballotPane">
+      <div class="pane-head" id="ballotHead"></div>
+      <div class="ballot-scroll" id="ballotBody"></div>
+      <div class="foot" id="ballotFoot"></div>
+    </section>
+  </main>
+</div>
+
+<datalist id="candList"></datalist>
+<div class="ov" id="ov"><div class="panel" id="ovPanel"></div></div>
+<div class="modal-wrap" id="modalWrap"><div class="modal" id="modal"></div></div>
+<div class="toast" id="toast"></div>
+<video id="camVideo" playsinline muted style="display:none"></video>
+
+<script>
+/* ============ tiện ích ============ */
+const $=(s,el=document)=>el.querySelector(s);
+const pad=n=>String(n).padStart(3,'0');
+const pad2=n=>String(n).padStart(2,'0');
+const pad3=pad;
+const rand=(a,b)=>a+Math.random()*(b-a);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const tm=t=>new Date(t).toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+const dt=t=>{const d=new Date(t);return `${tm(t)} ${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()}`};
+const SANS='"Inter","Helvetica Neue",Arial,sans-serif';
+const stripVN=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D').toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+function fnv(str){let h=0x811c9dc5;for(let i=0;i<str.length;i+=7){h^=str.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0}return h.toString(16).padStart(8,'0')}
+const loadImg=src=>new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=src});
+
+/* ============ dữ liệu phiên ============ */
+// Chưa phân vòng bầu (vòng 1/vòng 2): quy tắc trúng cử sẽ định nghĩa sau. Hiện chỉ đếm phiếu + tỉ lệ.
+const overText=()=>'Chọn quá số người tối đa';
+const TOP_N=18;  // số người dẫn đầu được làm nổi bật ở màn Kết quả
+// Danh sách ứng viên thật (tạm dùng cho tới khi có danh sách chính thức). Sửa trong Thiết lập.
+const CAND_LIST=`001 Nguyễn Thiên Huy
+002 Huỳnh Ngọc Nhân
+003 Trần Thị Mai
+004 Lê Văn Phúc
+005 Phạm Minh Tuấn
+006 K' Vượng
+007 Võ Thị Hồng Nhung
+008 Đặng Quốc Bảo
+009 Bùi Thị Thanh Hà
+010 Ngô Văn Thành
+011 Đỗ Thị Kim Oanh
+012 Hồ Ngọc Ân
+013 Dương Văn Lộc
+014 Lý Thị Bích Ngọc
+015 Trương Minh Khang
+016 Phan Thị Diệu Hiền
+017 Y Sơn Niê
+018 Ka Hương
+111 Hoàng Văn Long`;
+function loadCandText(){try{return localStorage.getItem('kp-cands')||CAND_LIST}catch(e){return CAND_LIST}}
+const S={
+  cfg:{session:'Bầu cử Hội Thánh nhiệm kỳ 2026–2028',seats:18,rows:18,dupRule:'invalid',blankRule:'valid',denom:'valid',operator:'Tổ kiểm phiếu 1',issued:180},
+  cands:[],ballots:[],pending:null,nextNo:1,locked:null,log:[]
+};
+let CMAP=new Map();
+function parseCands(text){
+  const list=[],bad=[];let first=true;
+  for(const raw of String(text).split(/\r?\n/)){
+    const l=raw.replace(/\u00a0/g,' ').trim();if(!l)continue;
+    const m=l.match(/^(\d+)[\s.\-:·,;]+(.+)$/);
+    if(m){list.push({stt:+m[1],name:m[2].replace(/\s+/g,' ').trim()})}
+    else if(first&&!/^\d/.test(l)){/* dòng tiêu đề, bỏ qua */}
+    else bad.push(l);
+    first=false;
+  }
+  return {list,bad};
+}
+function checkCands(text){
+  const {list,bad}=parseCands(text),seen=new Set(),dup=[],out=[];
+  for(const c of list){if(c.stt<1||c.stt>999)out.push(c.stt);if(seen.has(c.stt)){if(!dup.includes(c.stt))dup.push(c.stt)}seen.add(c.stt)}
+  return {list,bad,dup,out};
+}
+/* ---- Nhập danh sách từ file Excel (.xlsx) / Word (.docx) / CSV — đọc ngay trong trình duyệt, không cần mạng ---- */
+async function unzip(buf){
+  const u=new Uint8Array(buf),dv=new DataView(buf),out={};
+  let e=-1;for(let i=u.length-22;i>=Math.max(0,u.length-65558);i--)if(dv.getUint32(i,true)===0x06054b50){e=i;break}
+  if(e<0)throw new Error('không phải file nén Office');
+  let p=dv.getUint32(e+16,true);const n=dv.getUint16(e+10,true),td=new TextDecoder();
+  for(let k=0;k<n;k++){
+    if(dv.getUint32(p,true)!==0x02014b50)break;
+    const meth=dv.getUint16(p+10,true),csz=dv.getUint32(p+20,true),nl=dv.getUint16(p+28,true),xl=dv.getUint16(p+30,true),cl=dv.getUint16(p+32,true),lo=dv.getUint32(p+42,true);
+    const name=td.decode(u.subarray(p+46,p+46+nl));
+    out[name]=async()=>{const d=lo+30+dv.getUint16(lo+26,true)+dv.getUint16(lo+28,true),raw=u.subarray(d,d+csz);
+      if(meth===0)return td.decode(raw);
+      if(meth!==8)throw new Error('kiểu nén không hỗ trợ');
+      return await new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text()};
+    p+=46+nl+xl+cl;
+  }
+  return out;
+}
+const xmlDoc=t=>new DOMParser().parseFromString(t,'application/xml');
+const tags=(n,t)=>[...n.getElementsByTagNameNS('*',t)];
+async function readXlsx(buf){
+  const z=await unzip(buf);
+  const ss=z['xl/sharedStrings.xml']?tags(xmlDoc(await z['xl/sharedStrings.xml']()),'si').map(si=>tags(si,'t').filter(t=>t.parentNode.localName!=='rPh').map(t=>t.textContent).join('')):[];
+  let sheet=null;
+  try{const wb=xmlDoc(await z['xl/workbook.xml']()),rid=tags(wb,'sheet')[0].getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships','id');
+    const rel=tags(xmlDoc(await z['xl/_rels/workbook.xml.rels']()),'Relationship').find(r=>r.getAttribute('Id')===rid);
+    const tg=rel.getAttribute('Target').replace(/^\/?(xl\/)?/,'');sheet='xl/'+tg}catch(e){}
+  if(!z[sheet])sheet=Object.keys(z).filter(k=>/^xl\/worksheets\/sheet\d+\.xml$/.test(k)).sort((a,b)=>parseInt(a.match(/\d+/))-parseInt(b.match(/\d+/)))[0];
+  if(!sheet)throw new Error('file Excel không có trang tính');
+  const col=r=>{let c=0;for(const ch of r.replace(/\d+$/,''))c=c*26+ch.charCodeAt(0)-64;return c-1};
+  return tags(xmlDoc(await z[sheet]()),'row').map(row=>{const cells=[];
+    for(const c of tags(row,'c')){const t=c.getAttribute('t'),v=tags(c,'v')[0]?.textContent??'';
+      const val=t==='s'?(ss[+v]??''):t==='inlineStr'?tags(c,'t').map(x=>x.textContent).join(''):v;
+      cells[c.getAttribute('r')?col(c.getAttribute('r')):cells.length]=String(val).trim()}
+    return {cells:[...cells].map(x=>x??'')}});
+}
+async function readDocx(buf){
+  const z=await unzip(buf);if(!z['word/document.xml'])throw new Error('file Word không có nội dung');
+  const body=tags(xmlDoc(await z['word/document.xml']()),'body')[0],rows=[];
+  const ptext=p=>{let s='';for(const n of p.getElementsByTagNameNS('*','*')){if(n.localName==='t')s+=n.textContent;else if(n.localName==='tab')s+=' '}return s.trim()};
+  const walk=el=>{for(const n of el.children){
+    if(n.localName==='p'){const t=ptext(n);if(t)rows.push({cells:[t],numbered:tags(n,'numPr').length>0})}
+    else if(n.localName==='tbl'){for(const tr of tags(n,'tr'))rows.push({cells:tags(tr,'tc').map(tc=>tags(tc,'p').map(ptext).filter(Boolean).join(' '))})}
+    else if(n.localName==='sdt'||n.localName==='sdtContent')walk(n)}};
+  walk(body);return rows;
+}
+function readCsv(text){
+  const lines=text.replace(/^\ufeff/,'').split(/\r?\n/),sep=[';','\t',','].find(c=>lines.some(l=>l.includes(c)));
+  return lines.map(l=>({cells:sep?l.split(sep).map(x=>x.replace(/^"|"$/g,'').replace(/""/g,'"').trim()):[l.trim()]}));
+}
+/* Bảng → danh sách: tìm dòng tiêu đề (STT / Họ và tên, hoặc Họ + Tên tách cột); không có tiêu đề thì lấy ô số đầu tiên làm STT, ô chữ kế tiếp làm họ tên. */
+function rowsToCands(rows){
+  const norm=s=>String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/\s+/g,' ').trim();
+  const isNum=s=>/^\d{1,3}(\.0+)?\.?$/.test(String(s).trim());
+  let hdr=-1,sttC=-1,nameC=[];
+  for(let i=0;i<Math.min(rows.length,15)&&hdr<0;i++){const h=rows[i].cells.map(norm);
+    const full=h.findIndex(x=>/^(ho (va )?ten|ho ten.*|ten ung vien|ung vien|name|full ?name)$/.test(x));
+    const ho=h.findIndex(x=>/^ho( (va )?(ten )?(dem|lot|chu lot))?$/.test(x)),ten=h.findIndex(x=>/^ten$/.test(x));
+    if(full>=0)nameC=[full];else if(ho>=0&&ten>=0)nameC=[ho,ten];else if(ten>=0)nameC=[ten];
+    if(nameC.length){hdr=i;sttC=h.findIndex(x=>/^(stt|so thu tu|tt|so tt|so|ma so|no\.?)$/.test(x))}}
+  const list=[];let auto=0,noStt=0,numbered=0;
+  rows.forEach((r,i)=>{if(i<=hdr&&hdr>=0)return;const c=r.cells.map(x=>String(x??'').replace(/\u00a0/g,' ').trim());
+    if(!c.some(Boolean))return;
+    let stt=null,name='';
+    if(hdr>=0){name=nameC.map(k=>c[k]||'').filter(Boolean).join(' ');if(sttC>=0&&isNum(c[sttC]))stt=parseInt(c[sttC])}
+    else if(c.filter(Boolean).length===1){const t=c.find(Boolean),m=t.match(/^(\d{1,3})[\s.\-:·,;)]+(.+)$/);
+      if(m){stt=+m[1];name=m[2]}else if(r.numbered&&!isNum(t)){stt=++numbered;name=t}else if(!isNum(t))name=t}
+    else{const k=c.findIndex(isNum);if(k>=0){stt=parseInt(c[k]);name=c.slice(k+1).find(x=>x&&!isNum(x))||''}else name=c.find(x=>x&&!isNum(x))||''}
+    name=name.replace(/\s+/g,' ').trim();if(!name||name.length>60||name.split(' ').length>7)return;
+    if(stt==null&&/danh s[aá]ch|[uứ]ng vi[eê]n|h[oộ]i th[aá]nh|b[aầ]u c[uử]|nhi[eệ]m k[yỳ]|^ng[aà]y|:/i.test(name))return;
+    list.push({stt,name})});
+  if(list.some(x=>x.stt!=null)){for(let i=list.length;i--;)if(list[i].stt==null)list.splice(i,1)}
+  noStt=list.filter(x=>x.stt==null).length;
+  if(noStt){const used=new Set(list.filter(x=>x.stt!=null).map(x=>x.stt));for(const x of list)if(x.stt==null){do auto++;while(used.has(auto));x.stt=auto}}
+  return {list,autoStt:noStt};
+}
+async function importCandFile(file){
+  const ext=(file.name.split('.').pop()||'').toLowerCase();
+  if(ext==='xls'||ext==='doc')throw new Error(`file .${ext} đời cũ chưa đọc được. Mở bằng ${ext==='xls'?'Excel':'Word'} rồi "Lưu thành" .${ext}x`);
+  if(ext==='xlsx'||ext==='xlsm')return rowsToCands(await readXlsx(await file.arrayBuffer()));
+  if(ext==='docx')return rowsToCands(await readDocx(await file.arrayBuffer()));
+  if(ext==='csv'||ext==='txt')return rowsToCands(readCsv(await file.text()));
+  throw new Error('chỉ nhận file Excel (.xlsx), Word (.docx) hoặc .csv/.txt');
+}
+function setCands(list){
+  S.cands=list.map(c=>({...c}));
+  CMAP=new Map(S.cands.map(c=>[c.stt,c]));$('#candList').innerHTML=S.cands.map(c=>`<option value="${pad(c.stt)} · ${esc(c.name)}">`).join('')}
+const cand=s=>CMAP.get(+s);
+function log(text){S.log.unshift({t:Date.now(),who:S.cfg.operator,text})}
+function hist(b,text){b.history.push({t:Date.now(),text})}
+
+/* ============ phân tích dòng & phiếu ============ */
+const EV=new WeakMap();
+const rowEdited=r=>r.stt!==r.o0.stt;
+function evalRow(r){
+  const key=r.stt+'|'+(r.nameInk?1:0)+'|'+(r.nm?r.nm.top.join(',')+(r.nm.sure===false?'?':''):'');
+  const hit=EV.get(r);if(hit&&hit.key===key)return hit.v;
+  const stt=r.stt.trim();
+  let v;
+  if(!stt){v={status:'empty',doubt:[]};if(r.nameInk){v.warn='Có chữ ở ô họ tên nhưng không có STT';v.doubt=['stt']}}
+  else if(cand(+stt)){v={status:'ok',choice:cand(+stt).stt,doubt:[]};if(r.ocr&&!r.nameInk)v.warn='Ô họ tên có vẻ để trống'}
+  else v={status:'void',reason:'STT không có trong danh sách',doubt:['stt']};
+  // Máy đọc STT không chắc thì tô vàng ô STT để người xem lại.
+  if(!rowEdited(r)&&r.ocr&&r.stt&&r.ocr.sttConf!=null&&r.ocr.sttConf<.7&&!v.doubt.includes('stt'))v={...v,doubt:[...v.doubt,'stt']};
+  // Kiểm chéo tên: máy chủ gửi r.nm.top = STT của 3 người có tên khớp chữ viết nhất. STT đang ghi không nằm trong 2 người đầu thì tô vàng + gợi ý.
+  const top=r.nm?r.nm.top.map(Number).filter(t=>cand(t)):[];
+  if(top.length&&(v.status==='empty'||!top.slice(0,2).includes(+stt))){
+    const c0=cand(top[0]);
+    // Máy không chắc tên là ai (chữ khó đọc hoặc tên ngoài danh sách): chỉ báo không khớp + chữ máy đọc được, không mời đổi STT.
+    if(r.nm.sure===false)v={...v,nameUnsure:true,warn:`${v.status==='empty'?'Chưa có STT':`Tên viết không khớp STT ${stt}`}. Máy đọc tên là "${r.nm.read||'?'}", không chắc là ai trong danh sách (có thể tên ngoài danh sách)`};
+    else v={...v,suggest:c0.stt,warn:v.status==='empty'?`Chưa có STT. Tên viết giống ${pad(c0.stt)} ${c0.name}`:`Tên viết giống ${pad(c0.stt)} ${c0.name}, không khớp STT ${stt}`};
+    if(!v.doubt.includes('stt'))v.doubt=[...v.doubt,'stt'];
+  }
+  EV.set(r,{key,v});return v;
+}
+function buildRows(){return Array.from({length:S.cfg.rows},(_,i)=>{const r={line:i+1,ocr:null,stt:'',unread:false,nameInk:false};r.o0={stt:''};return r})}
+async function ensureCrops(b){
+  if(b.crops||b.cropping)return;
+  if(b.source==='camera'&&!b.aligned){b.crops=[];return}
+  b.cropping=true;
+  try{const img=await loadImg(b.photo);const k=(img.naturalWidth||img.width)/PG.w,cw=PG.nx+PG.nw-PG.sx;const out=[];
+    for(let i=0;i<S.cfg.rows;i++){const c=document.createElement('canvas');c.width=Math.round(cw*k);c.height=Math.round(PG.ch*k);c.getContext('2d').drawImage(img,PG.sx*k,rowY(i)*k,cw*k,PG.ch*k,0,0,c.width,c.height);out.push(c.toDataURL('image/jpeg',.8))}
+    b.crops=out}catch(e){b.crops=[]}
+  b.cropping=false;if(S.pending===b)renderBallot();
+}
+function computeBallot(b){
+  const flags=[];const cnt={},lines={};const voids=[],warns=[];
+  const evs=b.rows.map(evalRow);
+  evs.forEach((ev,i)=>{
+    if(ev.warn)warns.push(`Dòng ${i+1}: ${ev.warn}`);
+    if(ev.status==='void'){voids.push({line:i+1,reason:ev.reason});return}
+    if(ev.status!=='ok')return;
+    cnt[ev.choice]=(cnt[ev.choice]||0)+1;(lines[ev.choice]=lines[ev.choice]||[]).push(i+1);
+  });
+  const has=evs.map(ev=>ev.status!=='empty');
+  const last=has.lastIndexOf(true);
+  if(last>0&&has.slice(0,last).includes(false))flags.push({level:'info',text:'Có dòng trống xen giữa các dòng đã điền. Chỉ ghi chú, không ảnh hưởng kết quả.'});
+  const distinct=Object.keys(cnt).map(Number);
+  const dups=distinct.filter(s=>cnt[s]>1);
+  let invalid=null;
+  if(dups.length){
+    const t=dups.map(s=>`${pad(s)} ${cand(s).name} (dòng ${lines[s].join(', ')})`).join('; ');
+    invalid=invalid||`Ghi trùng: ${dups.map(s=>pad(s)).join(', ')}`;flags.push({level:'block',text:`Ghi trùng: ${t}.`});
+  }
+  if(distinct.length>S.cfg.seats){invalid=invalid||overText();flags.push({level:'block',text:`Chọn ${distinct.length} người, quá ${S.cfg.seats}.`})}
+  if(voids.length)flags.push({level:'info',text:`${voids.length} dòng không hợp lệ (${voids.map(x=>`dòng ${x.line}: ${x.reason}`).join('; ')}). Ảnh hưởng tới cả phiếu: chưa quy định, tạm tính phiếu vẫn hợp lệ.`});
+  if(warns.length)flags.push({level:'hint',text:`${warns.join('; ')}. Xem ảnh dòng đó. Nếu phiếu thiếu STT hoặc họ tên, bấm Phiếu hỏng.`});
+  if(b.dupOf&&!b.dupOk&&!b.decidedAt)flags.push({level:'block',code:'dup',exact:!!b.dupOf.exact,text:b.dupOf.exact?`Phiếu số ${pad3(b.dupOf.no)} đã ghi nhận rồi (${b.dupOf.station||'bàn khác'}). Tờ này đã quét, không tính lần 2.`:`Giống phiếu #${pad3(b.dupOf.no)} (${b.dupOf.station||'bàn khác'}) — có thể quét 2 lần.`});
+  if(b.below&&b.below.status==='ink'&&!b.belowOk&&!b.manualInvalid&&!b.decidedAt)flags.push({level:'block',code:'below',text:'Có nét bút bên dưới dòng cuối. Xem phần dưới của ảnh phiếu: nếu là chữ ghi thêm thì phiếu không hợp lệ.'});
+  if(b.manualInvalid){invalid=b.manualInvalid.reason;flags.push({level:'block',code:'manual',text:`Phiếu hỏng: ${b.manualInvalid.reason}`})}
+  const status=invalid?'invalid':(distinct.length||voids.length)?'valid':'blank';
+  return{flags,status,reason:invalid,votes:invalid?[]:distinct.sort((a,c)=>a-c),count:distinct.length};
+}
+function statusInfo(st,reason,n){
+  if(st==='valid')return{label:`Hợp lệ · ${n} người được bầu`,cls:'ok',color:'#1f7a35',short:'Hợp lệ'};
+  if(st==='blank')return{label:`Phiếu trắng · tính là ${S.cfg.blankRule==='valid'?'hợp lệ':'không hợp lệ'}`,cls:'',color:'#62666d',short:'Phiếu trắng'};
+  return{label:`Không hợp lệ · ${reason}`,cls:'bad',color:'#b93c3c',short:'Không hợp lệ'};
+}
+function tally(){
+  const t={total:S.ballots.length,validVoted:0,blank:0,invalid:0,votes:{}};
+  for(const b of S.ballots){if(b.status==='invalid')t.invalid++;else if(b.status==='blank')t.blank++;else{t.validVoted++;b.votes.forEach(s=>t.votes[s]=(t.votes[s]||0)+1)}}
+  t.valid=t.validVoted+(S.cfg.blankRule==='valid'?t.blank:0);
+  t.invalidAll=t.invalid+(S.cfg.blankRule==='invalid'?t.blank:0);
+  t.denom=t.valid;
+  return t;
+}
+function standings(){
+  // Chỉ xếp hạng theo số phiếu + tỉ lệ; chưa kết luận ai trúng (quy tắc vòng bầu định nghĩa sau).
+  const t=tally();
+  const rows=S.cands.map(c=>{const v=t.votes[c.stt]||0;return{c,v,pct:t.denom?v*100/t.denom:0}}).sort((a,b)=>b.v-a.v||a.c.stt-b.c.stt);
+  rows.forEach((r,i)=>{r.rank=i?(r.v===rows[i-1].v?rows[i-1].rank:i+1):1;
+    r.over50=t.denom>0&&r.v*2>=t.denom;    // từ 50% trở lên (đúng 50% cũng tính); so số nguyên để không lệch do làm tròn
+    r.top=r.v>0&&r.rank<=TOP_N});           // nhóm dẫn đầu; bằng phiếu ở hạng cuối thì lấy cả nhóm bằng
+  return{t,rows};
+}
+
+/* ============ vẽ phiếu giấy (dùng chung cho ảnh mô phỏng + ảnh ghép) ============ */
+const MK=[[[1,0,1,1],[0,1,0,1],[0,0,1,1],[1,0,1,0]],[[0,1,1,0],[1,1,0,1],[1,0,0,0],[0,1,0,1]],[[1,1,0,0],[0,0,1,1],[1,0,1,0],[0,1,1,1]],[[0,0,1,0],[1,0,1,1],[0,1,0,0],[1,1,0,1]]];
+const PG={w:210,h:297,mk:10,mg:6,tx:20,ty:62,rh:12,ch:10,lnw:8,cw:9,gap:3,nw:128};
+PG.sx=PG.tx+PG.lnw+PG.gap;PG.nx=PG.sx+3*PG.cw+PG.gap;
+const MARKERS=[[PG.mg,PG.mg],[PG.w-PG.mg-PG.mk,PG.mg],[PG.w-PG.mg-PG.mk,PG.h-PG.mg-PG.mk],[PG.mg,PG.h-PG.mg-PG.mk]];
+const MC=MARKERS.map(([x,y])=>[x+PG.mk/2,y+PG.mk/2]);
+const rowY=i=>PG.ty+i*PG.rh+(PG.rh-PG.ch)/2;
+const NUM_ROWS=18;  // số dòng trên phiếu in (khớp tools/make_ballot.py); không lấy theo thiết lập phiên cũ. Số người được chọn tối đa = số dòng (không giới hạn riêng)
+function drawPaper(g,W,H,paper){
+  const k=W/PG.w,cx0=PG.w/2;
+  g.fillStyle=paper;g.fillRect(0,0,W,H);
+  MARKERS.forEach(([x,y],id)=>{const c=PG.mk/6;g.fillStyle='#111';for(let r=0;r<6;r++)for(let q=0;q<6;q++){const border=r===0||q===0||r===5||q===5;if(border||MK[id][r-1][q-1])g.fillRect((x+q*c)*k,(y+r*c)*k,c*k+.6,c*k+.6)}});
+  g.fillStyle='#111';g.textAlign='center';g.textBaseline='alphabetic';
+  g.font=`600 ${5.3*k}px ${SANS}`;g.fillText('PHIẾU BẦU CỬ',cx0*k,26*k);
+  g.font=`${2.5*k}px ${SANS}`;g.fillText(S.cfg.session,cx0*k,31.5*k);
+  g.font=`${2.2*k}px ${SANS}`;g.fillText(`Ghi đủ số thứ tự và họ tên người được chọn, tối đa ${S.cfg.seats} người.`,cx0*k,36*k);
+  g.font=`600 ${2.4*k}px ${SANS}`;g.fillText('Dòng',(PG.tx+PG.lnw/2)*k,(rowY(0)-2)*k);g.fillText('Số thứ tự',(PG.sx+1.5*PG.cw)*k,(rowY(0)-2)*k);g.fillText('Họ và tên',(PG.nx+PG.nw/2)*k,(rowY(0)-2)*k);
+  g.strokeStyle='#555';g.lineWidth=Math.max(1,.25*k);g.font=`${2.8*k}px ${SANS}`;
+  for(let i=0;i<S.cfg.rows;i++){const y=rowY(i);for(let j=0;j<3;j++)g.strokeRect((PG.sx+j*PG.cw)*k,y*k,PG.cw*k,PG.ch*k);g.strokeRect(PG.nx*k,y*k,PG.nw*k,PG.ch*k);g.fillStyle='#111';g.fillText(String(i+1),(PG.tx+PG.lnw/2)*k,(y+PG.ch/2+1)*k)}
+  return k;
+}
+const SHEET_W=848,SHEET_H=Math.round(848*PG.h/PG.w);
+function drawDigital(g,b){
+  const k=drawPaper(g,SHEET_W,SHEET_H,'#ffffff');
+  b.rows.forEach((r,i)=>{const y=rowY(i);const ev=evalRow(r);
+    if(ev.status==='ok'){const c=cand(ev.choice);g.fillStyle='#111';g.font=`500 ${6.2*k}px ${SANS}`;g.textAlign='center';pad(c.stt).split('').forEach((d,j)=>g.fillText(d,(PG.sx+j*PG.cw+PG.cw/2)*k,(y+7.4)*k));
+      g.textAlign='left';g.font=`${4.2*k}px ${SANS}`;g.fillText(c.name,(PG.nx+2.5)*k,(y+6.6)*k);
+      if(rowEdited(r)){g.fillStyle='#777';g.font=`${1.9*k}px ${SANS}`;g.textAlign='right';g.fillText(r.ocr?`máy đọc: ${r.o0.stt||'?'} · người duyệt sửa`:'nhập tay',(PG.nx+PG.nw-1.5)*k,(y+9.4)*k)}}
+    else if(ev.status==='void'){
+      g.fillStyle='#999';g.font=`${3.8*k}px ${SANS}`;g.textAlign='left';const t=`${r.stt||'—'}`;g.fillText(t,(PG.nx+2.5)*k,(y+6.6)*k);
+      const w=g.measureText(t).width;g.fillRect((PG.nx+2.5)*k,(y+5.3)*k,w,.3*k);
+      g.fillStyle='#b93c3c';g.font=`${1.9*k}px ${SANS}`;g.textAlign='right';
+      g.fillText(`không hợp lệ: ${ev.reason}`,(PG.nx+PG.nw-1.5)*k,(y+9.4)*k)}
+  });
+  const st=statusInfo(b.status,b.reason,b.votes.length);
+  g.strokeStyle=st.color;g.lineWidth=.5*k;g.strokeRect(18*k,187.5*k,112*k,6*k);
+  g.fillStyle=st.color;g.textAlign='left';g.font=`600 ${2.8*k}px ${SANS}`;g.fillText('KẾT LUẬN: '+st.label.toUpperCase(),20*k,191.5*k);
+  g.fillStyle='#555';g.textAlign='right';g.font=`${2*k}px ${SANS}`;g.fillText(`Duyệt: ${b.station||S.cfg.operator}`,128*k,191.4*k);
+}
+async function makeComposite(b){
+  const img=await loadImg(b.photo);
+  const PW=SHEET_W,PH=SHEET_H,M=32,G=24,HD=116,FT=58;const W=M*2+PW*2+G,H=HD+PH+FT;
+  const c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
+  g.fillStyle='#ffffff';g.fillRect(0,0,W,H);
+  const st=statusInfo(b.status,b.reason,b.votes.length);
+  g.textBaseline='middle';g.textAlign='left';g.fillStyle='#08090a';g.font=`500 36px ${SANS}`;const title=`Phiếu #${pad3(b.no)}${b.version>1?` (bản ${b.version})`:''}`;g.fillText(title,M,42);
+  const w1=g.measureText(title).width;g.fillStyle=st.color;g.font=`500 26px ${SANS}`;g.fillText(st.label,M+w1+24,44);
+  g.textAlign='right';g.fillStyle='#62666d';g.font=`22px ${SANS}`;g.fillText(S.cfg.session,W-M,32);g.fillText(`Chụp ${dt(b.capturedAt)} · Duyệt ${dt(b.decidedAt)}`,W-M,62);
+  g.textAlign='left';g.font=`18px ${SANS}`;g.fillStyle='#62666d';g.fillText('ẢNH CHỤP (ĐÃ NẮN THẲNG)',M,HD-18);g.fillText('BẢN ĐIỆN TỬ (SAU DUYỆT)',M+PW+G,HD-18);
+  if(b.source==='camera'&&!b.aligned){const s=Math.min(PW/img.width,PH/img.height);g.fillStyle='#000';g.fillRect(M,HD,PW,PH);g.drawImage(img,M+(PW-img.width*s)/2,HD+(PH-img.height*s)/2,img.width*s,img.height*s)}
+  else g.drawImage(img,M,HD,PW,PH);g.strokeStyle='#d0d6e0';g.lineWidth=2;g.strokeRect(M,HD,PW,PH);g.strokeRect(M+PW+G,HD,PW,PH);
+  const d=document.createElement('canvas');d.width=SHEET_W;d.height=SHEET_H;drawDigital(d.getContext('2d'),b);g.drawImage(d,M+PW+G,HD);
+  const edits=b.rows.filter(r=>rowEdited(r)||!['ok','empty'].includes(evalRow(r).status)).length;
+  g.fillStyle='#62666d';g.font=`20px ${SANS}`;g.fillText(`Người duyệt: ${b.station||S.cfg.operator} · Quét lại: ${b.rescans} · Dòng đã sửa/bỏ: ${edits} · Mã kiểm tra ảnh: ${b.hash}`,M,HD+PH+30);
+  b.composite=c.toDataURL('image/jpeg',.86);
+  return b.composite;
+}
+
+/* ============ phiếu: tạo, chấp nhận, quét lại ============ */
+function newBallot(photo,no){
+  const b={no:no??S.nextNo++,station:STATION.name,capturedAt:Date.now(),photo,hash:fnv(photo),source:'camera',rows:buildRows(),spoiled:false,manualInvalid:null,rescans:0,version:1,history:[],composite:null,status:null,votes:[]};
+  hist(b,'Chụp bằng camera thật');
+  const dupe=S.ballots.find(x=>x.hash===b.hash);if(dupe)hist(b,`Cảnh báo: ảnh trùng phiếu #${pad3(dupe.no)}`);
+  log(`Chụp phiếu #${pad3(b.no)}`);
+  return b;
+}
+// Gửi đáp án (phiếu điện tử sau duyệt = đúng như phiếu giấy) về máy đọc, lưu cạnh bản quét để chấm điểm engine.
+function sendLabel(b){
+  if(!b.scanId||!OCR.up)return;
+  const rows=b.rows.map(r=>{const v=evalRow(r);return{line:r.line,stt:r.stt.trim(),read:r.ocr?{stt:r.ocr.stt,sttRaw:r.ocr.sttRaw}:null,nameInk:r.nameInk,result:v.status,choice:v.choice??null,reason:v.reason||null}});
+  fetch(OCR.url+'/label',{method:'POST',body:JSON.stringify({scan:b.scanId,ballot:b.no,rows,status:b.status,reason:b.reason||null,cands:S.cands.map(c=>({stt:c.stt,name:c.name}))})}).catch(()=>{});
+}
+function accept(){
+  const b=S.pending;if(!b)return;
+  if(S.locked)return toast('Phiên đã chốt kết quả, không ghi nhận thêm phiếu.');
+  if(b.rescanning)return toast('Đang quét lại, chờ máy chụp xong.');
+  if(b.reading)return toast('Máy đang đọc phiếu, chờ một chút rồi bấm lại.');
+  if(b.dupOf&&!b.dupOk&&!b.decidedAt)return toast(b.dupOf.exact?'Tờ phiếu này đã được ghi nhận rồi. Bấm Bỏ phiếu trùng.':'Phiếu này giống 1 phiếu đã ghi nhận. Bấm Bỏ phiếu trùng hoặc Không trùng trước.',null,null,5000);
+  if(b.below&&b.below.status==='ink'&&!b.belowOk&&!b.manualInvalid)return toast('Máy thấy nét bút bên dưới dòng cuối. Bấm Phiếu hỏng hoặc Không phải chữ trước.',null,null,5000);
+  const c=computeBallot(b);
+  b.status=c.status;b.reason=c.reason;b.votes=c.votes;b.decidedAt=Date.now();
+  sendLabel(b);
+  const st=statusInfo(b.status,b.reason,b.votes.length);
+  const reopened=!!b.reopened;
+  if(reopened&&flagOpen(b)){b.flag.done={by:STATION.name,at:Date.now()};hist(b,'Máy tính duyệt cờ (sửa và chấp nhận lại)')}
+  if(reopened){b.version++;hist(b,`Chấp nhận lại (bản ${b.version}): ${st.label}`);log(`Sửa phiếu #${pad3(b.no)} → ${st.label}`);delete b.reopened;delete b.snapshot}
+  else{hist(b,`Chấp nhận: ${st.label}`);log(`Ghi nhận phiếu #${pad3(b.no)}: ${st.label}`);S.ballots.push(b)}
+  pushBallot(b);
+  S.pending=null;b.composite=null;makeComposite(b).then(refreshList);
+  camRelease();renderAll();
+  toast(`Đã lưu phiếu #${pad3(b.no)} · ${st.short} · ảnh ghép`,'Hoàn tác',()=>reopen(b,'Hoàn tác ngay sau khi chấp nhận'),8000);
+}
+function markInvalid(reason){
+  const b=S.pending;if(!b||b.rescanning)return;if(S.locked)return toast('Phiên đã chốt kết quả.');
+  b.manualInvalid={reason};hist(b,`Phiếu hỏng: ${reason}`);accept();
+}
+function rescan(){
+  const b=S.pending;if(!b||b.rescanning)return;
+  if(b.reopened)return toast('Phiếu mở lại từ danh sách không quét lại được. Dùng Hủy sửa hoặc sửa tay.');
+  b.rescanning=true;hist(b,'Yêu cầu quét lại');
+  cam.phase='live';
+  renderAll();
+}
+/* ---- nhận dạng chữ thật: máy chủ cục bộ tools/ocr_server.py (Apple Vision, offline) ---- */
+// Trang mở thẳng từ máy chủ (http://localhost:8766 hoặc https://<IP>:8443) thì gọi chính địa chỉ đó; mở bằng file hoặc cổng 8765 cũ thì gọi localhost:8766.
+const OCR={url:(location.protocol==='file:'||location.port==='8765')?'http://localhost:8766':location.origin,up:false};
+const useRealOcr=()=>OCR.up;
+// Chỉ hiện chữ khi có sự cố; bình thường để trống cho gọn.
+function ocrLabel(){const l=$('#ocrLbl');if(!l)return;l.textContent=SH.on?(SH.ok?'':'· Mất kết nối máy chủ'):OCR.up?'':'· Máy đọc STT chưa bật (gõ tay)';l.style.color='var(--bad-ink)';const l2=$('#ocrLbl2');if(l2){l2.textContent=l.textContent;l2.style.color=l.style.color}}
+async function pingOcr(){const was=OCR.up;try{const r=await fetch(OCR.url+'/health',{cache:'no-store'});OCR.up=r.ok;const h=await r.json();if(h.shared&&OCR.url===location.origin&&!SH.on){SH.on=true;syncLoop()}}catch(e){OCR.up=false}if(was!==OCR.up)renderCamFoot();ocrLabel()}
+async function runRealOcr(b){
+  b.reading=true;renderBallot();
+  try{
+    const r=await fetch(OCR.url+'/read',{method:'POST',body:JSON.stringify({image:b.photo,engine:'none',stts:S.cands.map(c=>c.stt),no:b.no,editing:!!b.reopened})}).then(x=>x.json());
+    if(r.error)throw new Error(r.error);
+    // Số in trên giấy (góc trên phải) là mã phiếu. Phiếu chưa ghi nhận thì lấy số đó làm mã; phiếu đang mở lại để sửa thì chỉ báo nếu đặt nhầm tờ.
+    if('sheet' in r){
+      if(r.sheet&&b.reopened&&b.sheet&&r.sheet!==b.sheet)toast(`Tờ đang đặt là phiếu số ${pad3(r.sheet)}, không phải phiếu #${pad3(b.no)} đang sửa. Đặt đúng tờ rồi bấm Quét lại phiếu.`,null,null,7000);
+      else if(r.sheet&&!b.reopened){if(b.no!==r.sheet)hist(b,`Đọc được số phiếu in trên giấy: ${pad3(r.sheet)}`);b.no=r.sheet;b.sheet=r.sheet}
+      else if(!r.sheet&&!b.sheet){hist(b,'Không đọc được số phiếu in trên giấy');if(r.aligned)toast('Chưa đọc được số phiếu ở góc trên phải. Đừng che góc đó rồi bấm Quét lại phiếu.',null,null,6000)}
+    }
+    b.rows=Array.from({length:S.cfg.rows},(_,i)=>{const o=r.rows[i]||{stt:''};const row={line:i+1,ocr:o,stt:o.stt||'',unread:!!o.unreadable&&!o.stt,nameInk:!!o.nameInk};row.o0={stt:row.stt};return row});
+    if(r.page){b.raw=b.raw||b.photo;b.photo=r.page;b.hash=fnv(r.page);b.aligned=true;b.crops=null;b.composite=null;ensureCrops(b)}
+    else{b.aligned=false;if(b.source==='camera')toast('Không thấy đủ 4 góc phiếu, máy đọc có thể sai. Chỉnh phiếu cho đủ 4 góc rồi bấm Quét lại phiếu.')}
+    if(r.scan)b.scanId=r.scan;
+    b.dupOf=r.dupOf||null;b.dupOk=false;if(b.dupOf)hist(b,b.dupOf.exact?`Cảnh báo: phiếu số ${pad3(b.dupOf.no)} đã ghi nhận rồi (${b.dupOf.station})`:`Cảnh báo: giống phiếu #${pad3(b.dupOf.no)} đã ghi nhận (${b.dupOf.station})`);
+    b.below=r.below||null;b.belowOk=false;if(b.below&&b.below.status==='ink')hist(b,'Cảnh báo: có nét bút bên dưới dòng cuối');
+    if(r.names==='wait'&&r.scan)pollNames(b,r.scan);
+    b.ocrEngine='none';hist(b,`Máy đọc STT (${r.ms} ms${r.aligned?'':', ảnh chưa nắn theo 4 góc'})`);
+  }catch(e){toast('Máy đọc chữ lỗi: '+(e.message||e)+'. Hãy gõ tay các dòng.')}
+  b.reading=false;if(S.pending===b)renderBallot();
+}
+// Kiểm chéo tên chạy nền ở máy chủ (vài giây đến vài chục giây). Hỏi lại cho tới khi xong; phiếu đã quét lại / đã duyệt thì thôi.
+async function pollNames(b,scan){
+  for(let k=0;k<80;k++){
+    await new Promise(r=>setTimeout(r,1500));
+    if(b.scanId!==scan||b.decidedAt)return;
+    try{const j=await fetch(`${OCR.url}/names?scan=${scan}`,{cache:'no-store'}).then(x=>x.json());
+      if(j.state==='wait')continue;
+      (j.rows||[]).forEach(x=>{const r=b.rows[x.line-1];if(r)r.nm={top:x.top,sure:x.sure!==false,read:x.read||''}});
+      const n=b.rows.filter(r=>{const e=evalRow(r);return e.suggest||e.nameUnsure}).length;
+      hist(b,j.state==='done'?`Máy kiểm tên xong (${Math.round(j.ms/1000)} giây): ${n?n+' dòng tên không khớp STT':'tên khớp STT'}`:'Máy kiểm tên lỗi, người duyệt tự so tên');
+      if(S.pending===b)renderBallot();return}catch(e){}
+  }
+}
+function onCaptured(photo){
+  const b=S.pending;
+  if(b&&b.rescanning){b.photo=photo;b.hash=fnv(photo);b.rescanning=false;b.rescans++;b.capturedAt=Date.now();b.rows=buildRows();b.crops=null;b.manualInvalid=null;hist(b,`Quét lại lần ${b.rescans}, máy đọc lại`);log(`Quét lại phiếu #${pad3(b.no)}`);ensureCrops(b);if(useRealOcr())runRealOcr(b)}
+  else if(SH.on){
+    // Nhiều bàn: mã phiếu do máy chủ cấp để 2 bàn không trùng mã. Mất kết nối thì không nhận phiếu (tránh ghi đè nhau).
+    fetch(OCR.url+'/next',{method:'POST',headers:SH.hdr(),body:'{}'}).then(x=>x.json()).then(r=>{
+      S.pending=newBallot(photo,r.no);ensureCrops(S.pending);runRealOcr(S.pending);renderAll()
+    }).catch(()=>{camRelease();toast('Mất kết nối với máy chủ, chưa nhận phiếu này. Kiểm tra mạng rồi đặt lại phiếu.',null,null,6000);renderAll()});
+    return;
+  }
+  else{S.pending=newBallot(photo);ensureCrops(S.pending);if(useRealOcr())runRealOcr(S.pending)}
+  renderAll();
+}
+function reopen(b,reason){
+  if(S.pending)return toast('Đang có phiếu chờ duyệt, xử lý xong trước khi mở lại phiếu khác.');
+  if(S.locked)return toast('Phiên đã chốt, mở khóa trong màn Kết quả trước.');
+  b.snapshot=JSON.stringify({rows:b.rows,manualInvalid:b.manualInvalid});
+  b.reopened={reason};hist(b,`Mở lại để sửa: ${reason}`);log(`Mở lại phiếu #${pad3(b.no)}: ${reason}`);
+  S.pending=b;ensureCrops(b);closeOverlay();renderAll();
+}
+function cancelReopen(){const b=S.pending;if(!b?.reopened)return;Object.assign(b,JSON.parse(b.snapshot));delete b.snapshot;delete b.reopened;hist(b,'Hủy sửa, giữ nguyên kết quả cũ');S.pending=null;renderAll()}
+
+/* ============ thao tác dòng ============ */
+function setField(i,f,val){const r=S.pending.rows[i];
+  if(f==='stt')r.stt=val.replace(/\D/g,'').slice(0,3);
+  renderBallot()}
+
+/* ============ render: thanh trên ============ */
+function renderTop(){
+  $('#sessName').textContent=S.cfg.session;
+  $('#sessSub').textContent=`Mỗi phiếu chọn tối đa ${S.cfg.seats} người${S.locked?' · ĐÃ CHỐT':''}`;
+  const t=tally();const issued=+S.cfg.issued||0;
+  const items=[['Đã ghi nhận',t.total,issued?`còn ${Math.max(0,issued-t.total)}/${issued}`:''],['Hợp lệ',t.valid,t.blank&&S.cfg.blankRule==='valid'?`gồm ${t.blank} trắng`:''],['Không hợp lệ',t.invalidAll]];
+  $('#stats').innerHTML=items.map(([l,v,s])=>`<div class="stat"><span class="v">${v}</span><span class="l">${l}${s?' · '+s:''}</span></div>`).join('');
+  $('#listCount').textContent=S.ballots.length;
+  const nf=S.ballots.filter(flagOpen).length,fc=$('#flagCount');fc.hidden=!nf;fc.textContent='⚑ '+nf;
+}
+
+/* ============ render: phiếu điện tử ============ */
+function rowView(r,i){
+  const ev=evalRow(r);const dS=ev.doubt.includes('stt');
+  let cls='row',sub='',nm;
+  const c=r.stt.trim()?cand(+r.stt):null;
+  if(ev.status==='ok')nm=`<div class="nm" style="font-size:15px;color:var(--paper)">${esc(c.name)}</div>`;
+  else if(ev.status==='void'){cls+=' void';nm=`<div class="nm" style="font-size:15px;color:var(--bad-ink)">Không có trong danh sách</div>`}
+  else nm=`<div class="nm muted" style="font-size:15px">—</div>`;
+  if(r.stt.trim()||r.nameInk){const crop=S.pending?.crops?.[i];
+    sub=`${crop?`<img class="crop" data-i="${i}" style="height:48px" src="${crop}" alt="Dòng ${i+1} trên phiếu giấy">`:''}${ev.warn&&!ev.suggest&&!ev.nameUnsure?`<b class="warn">${esc(ev.warn)}</b>`:''}`}
+  // Tên viết không khớp STT: 1 dòng riêng dưới ảnh cắt, kèm nút đổi STT theo tên.
+  const nmFix=ev.suggest||ev.nameUnsure?`<div class="fix ed"><b style="color:var(--paper);font-weight:510">${esc(ev.warn)}</b>${ev.suggest?`<button class="lnk" data-act="useName" data-i="${i}">Đổi sang ${pad(ev.suggest)}</button>`:''}</div>`:'';
+  const edited=rowEdited(r)&&r.ocr;
+  const fix=edited?`<div class="fix ed">Máy đọc ${esc(r.o0.stt||'trống')}<button class="lnk" data-act="resetStt" data-i="${i}">Hoàn tác</button></div>`:'';
+  return`<div class="${cls}">
+    <div class="ln">${i+1}</div>
+    <div class="stt"><input class="inp${dS?' doubt':''}${edited?' edited':''}" data-fk="s${i}" data-i="${i}" data-f="stt" value="${esc(r.stt)}" maxlength="3" inputmode="numeric" placeholder="···"></div>
+    ${nm}
+    ${sub?`<div class="sub">${sub}</div>`:''}
+    ${nmFix}${fix}
+  </div>`;
+}
+function renderBallot(){
+  const ae0=document.activeElement,fk=ae0?.dataset?.fk,pos0=fk?ae0.selectionStart:null,sc0=$('#ballotBody').scrollTop;
+  const head=$('#ballotHead'),body=$('#ballotBody'),foot=$('#ballotFoot'),b=S.pending;
+  document.body.classList.toggle('has-pending',!!b&&!b.rescanning);
+  { const k=b?b.no:null; if(k!==window._lastPendNo){ window._lastPendNo=k; if(b&&matchMedia('(max-width:899px)').matches) setTimeout(()=>$('#ballotPane').scrollIntoView({behavior:'smooth',block:'start'}),50); } }
+  if(!b){
+    head.innerHTML=`<span class="pane-title">Phiếu điện tử</span><span class="spacer"></span><span class="lbl">${SH.on?esc(STATION.name):`Phiếu tiếp theo: #${pad3(S.nextNo)}`}</span>`;
+    body.innerHTML=`<div class="empty-state"><svg width="44" height="56" viewBox="0 0 44 56" fill="none"><rect x=".5" y=".5" width="43" height="55" rx="3" stroke="#d0d6e0"/><rect x="4" y="4" width="6" height="6" fill="#d0d6e0"/><rect x="34" y="4" width="6" height="6" fill="#d0d6e0"/><rect x="4" y="46" width="6" height="6" fill="#d0d6e0"/><rect x="34" y="46" width="6" height="6" fill="#d0d6e0"/><path d="M10 20h24M10 27h24M10 34h16" stroke="#d0d6e0"/></svg>
+      <h3>${S.locked?'Phiên đã chốt kết quả':'Chưa có phiếu chờ duyệt'}</h3><p>${S.locked?'Không nhận thêm phiếu.':'Đặt phiếu dưới camera, đủ 4 góc là máy tự chụp.'}</p></div>`;
+    foot.innerHTML=`<div class="concl"><b>—</b><span>Chưa có phiếu</span></div><button class="btn btn-text" disabled>Quét lại phiếu</button><button class="btn btn-text" disabled>Phiếu hỏng</button><button class="btn-primary btn" disabled>Chấp nhận</button>`;
+    return;
+  }
+  const c=computeBallot(b);
+  const state=b.rescanning?'<span class="chip dec">Đang quét lại</span>':b.reopened?'<span class="chip info">Mở lại để sửa</span>':'<span class="chip">Chờ bạn duyệt</span>';
+  head.innerHTML=`<span class="pane-title">Phiếu</span><span class="mono" style="color:var(--paper)">#${pad3(b.no)}</span>${state}<span class="spacer"></span><span class="lbl">${esc(b.station||'')} · ${tm(b.capturedAt)}${b.rescans?` · quét lại ${b.rescans}`:''}</span>`;
+  const banner=b.reopened?`<div class="banner">Đang sửa phiếu đã ghi nhận. Bấm Chấp nhận để lưu bản mới, Hủy sửa để giữ bản cũ.</div>`:'';
+  const noOcr=b.source==='camera'&&!b.ocrEngine&&!b.reading?`<div class="banner">Máy đọc STT chưa chạy. Gõ STT từng dòng theo ảnh.</div>`:'';
+  const flagHtml=f=>`<div class="flag block"><span class="dot"></span><span class="t">${esc(f.text)}</span><span class="acts">${f.code==='manual'?`<button class="btn btn-sm" data-act="unmanual">Bỏ đánh dấu</button>`:''}${f.code==='dup'?`<button class="btn btn-sm" data-act="dupDrop">Bỏ phiếu trùng</button>${f.exact?'':`<button class="btn btn-sm" data-act="dupOk">Không trùng</button>`}`:''}${f.code==='below'?`<button class="btn btn-sm" data-act="belowBad">Phiếu hỏng</button><button class="btn btn-sm" data-act="belowOk">Không phải chữ</button>`:''}</span></div>`;
+  // Cảnh báo phiếu trùng đặt lên đầu, để không bị khuất dưới các dòng.
+  const dupTop=c.flags.filter(f=>f.code==='dup').map(f=>`<div class="flags" style="margin:0 0 12px">${flagHtml(f)}</div>`).join('');
+  const flags=c.flags.filter(f=>f.level==='block'&&f.code!=='dup').map(f=>`<div class="flag block"><span class="dot"></span><span class="t">${esc(f.text)}</span><span class="acts">${f.code==='manual'?`<button class="btn btn-sm" data-act="unmanual">Bỏ đánh dấu</button>`:''}${f.code==='dup'?`<button class="btn btn-sm" data-act="dupDrop">Bỏ phiếu trùng</button>${f.exact?'':`<button class="btn btn-sm" data-act="dupOk">Không trùng</button>`}`:''}${f.code==='below'?`<button class="btn btn-sm" data-act="belowBad">Phiếu hỏng</button><button class="btn btn-sm" data-act="belowOk">Không phải chữ</button>`:''}</span></div>`).join('');
+  // Vẽ lại khi đang gõ: trình duyệt coi như rời ô và bắn 'change' -> không được đệm số 0 lúc này (từng làm 00 thành 000).
+  window._rb=true;try{body.innerHTML=`${banner}${noOcr}${dupTop}<div class="sheet">
+    <div class="sheet-title">PHIẾU BẦU CỬ</div>
+    <div class="sheet-sub">${esc(S.cfg.session)}</div>
+    <div class="sheet-head"><span>Dòng</span><span>Số thứ tự</span><span>Họ và tên</span></div>
+    ${b.rows.map(rowView).join('')}
+    ${flags?`<div class="flags">${flags}</div>`:''}
+    ${b.reading?`<div class="rescan-mask"><b>Đang đọc phiếu #${pad3(b.no)}…</b></div>`:''}${b.rescanning?`<div class="rescan-mask"><b>Đang quét lại phiếu #${pad3(b.no)}</b><span class="muted">Giữ phiếu yên trong khung.</span></div>`:''}
+  </div>`}finally{window._rb=false}
+  const st=statusInfo(c.status,c.reason,c.count);
+  const concl=b.rescanning?`<b>Đang quét lại…</b><span>Chờ máy chụp</span>`:
+    `<b class="${st.cls}">${esc(st.label)}</b><span>${c.status==='valid'?(c.votes.length?esc(c.votes.map(s=>pad(s)).join(' · ')):'Không có dòng nào được tính'):c.status==='blank'?'Không chọn ai':'Cả phiếu không được tính'}</span>`;
+  const can=!b.rescanning&&!b.reading&&!S.locked;
+  foot.innerHTML=`<div class="concl">${concl}</div>
+    ${b.reopened?`<button class="btn btn-text" data-act="cancelReopen">Hủy sửa</button>`:`<button class="btn btn-text" data-act="rescan" ${b.rescanning?'disabled':''}>Quét lại phiếu</button>`}
+    <div class="simwrap"><button class="btn btn-text" data-act="badtoggle" ${b.rescanning?'disabled':''}>Phiếu hỏng</button><div class="pop" id="badPop" hidden>${['Thiếu họ tên hoặc STT ở một dòng','Họ tên không khớp với STT','Có ký hiệu, chữ ký lạ','Không đúng mẫu','Rách, không đọc được'].map(r=>`<button class="btn" data-act="bad" data-v="${esc(r)}">${esc(r)}</button>`).join('')}</div></div>
+    <button class="btn btn-primary${c.status==='invalid'?' btn-danger':''}" data-act="accept" ${can?'':'disabled'}>${c.status==='invalid'?'Đúng, không hợp lệ':'Chấp nhận'}</button>`;
+  $('#ballotBody').scrollTop=sc0;
+  if(fk){const el=document.querySelector(`[data-fk="${fk}"]`);if(el){window._noSel=true;el.focus();window._noSel=false;try{el.setSelectionRange(pos0,pos0)}catch(e){}}}
+}
+$('#ballotPane').addEventListener('click',e=>{
+  const t=e.target.closest('[data-act]');if(!t)return;const b=S.pending;
+  switch(t.dataset.act){
+    case'accept':accept();break;case'rescan':rescan();break;case'cancelReopen':cancelReopen();break;
+    case'badtoggle':{e.stopPropagation();const p=$('#badPop');p.hidden=!p.hidden;break}
+    case'bad':markInvalid(t.dataset.v);break;
+    case'resetStt':{const r=b.rows[+t.dataset.i];r.stt=r.o0.stt;renderBallot();break}
+    case'useName':{const r=b.rows[+t.dataset.i],ev=evalRow(r);if(ev.suggest){hist(b,`Dòng ${r.line}: đổi STT ${r.stt||'trống'} → ${pad(ev.suggest)} theo tên viết`);r.stt=pad(ev.suggest);renderBallot()}break}
+    case'belowOk':b.belowOk=true;hist(b,'Người duyệt xác nhận: không có chữ ghi dưới dòng cuối');renderBallot();break;
+    case'belowBad':markInvalid('Ghi ngoài ô (bên dưới dòng cuối)');break;
+    case'unmanual':b.manualInvalid=null;hist(b,'Bỏ đánh dấu phiếu hỏng');renderBallot();break;
+    case'dupOk':b.dupOk=true;hist(b,'Người duyệt xác nhận: không trùng');renderBallot();break;
+    case'dupDrop':log(`Bỏ phiếu #${pad3(b.no)}: trùng phiếu #${pad3(b.dupOf.no)}`);S.pending=null;camRelease();renderAll();toast(`Đã bỏ, không tính phiếu #${pad3(b.no)}. Cất tờ giấy này riêng.`);break;
+  }});
+$('#ballotPane').addEventListener('click',e=>{const im=e.target.closest('img.crop[data-i]');if(!im)return;const el=document.querySelector(`[data-fk="s${im.dataset.i}"]`);if(el){el.focus();el.select()}});
+$('#ballotPane').addEventListener('focusin',e=>{const t=e.target;if(t.dataset&&t.dataset.f==='stt'&&!window._noSel)t.select()});
+// Sửa ô nào chỉ đổi ô đó: KHÔNG tự nhảy sang dòng kế khi đủ 3 số (từng làm phím gõ tiếp đè mất số dòng dưới).
+// Muốn sang dòng kế: Enter hoặc Tab. Đang gõ bằng bộ gõ tiếng Việt (composition) thì chờ gõ xong mới vẽ lại.
+$('#ballotPane').addEventListener('input',e=>{const t=e.target;if(!t.dataset.f||!S.pending||e.isComposing)return;setField(+t.dataset.i,t.dataset.f,t.value)});
+$('#ballotPane').addEventListener('compositionend',e=>{const t=e.target;if(!t.dataset.f||!S.pending)return;setField(+t.dataset.i,t.dataset.f,t.value)});
+// Rời ô: thêm số 0 đằng trước (5 → 005). Vẽ lại sau khi con trỏ đã sang ô mới, để giữ đúng ô người dùng vừa bấm.
+// Dùng focusout (không dùng change): sau mỗi lần vẽ lại, ô mới không còn "đã sửa" nên change không bắn khi rời ô.
+$('#ballotPane').addEventListener('focusout',e=>{const t=e.target;if(t.dataset?.f!=='stt'||!S.pending||window._rb||!t.isConnected)return;const r=S.pending.rows[+t.dataset.i];if(r.stt&&r.stt.length<3){r.stt=r.stt.padStart(3,'0');t.value=r.stt;setTimeout(()=>{if(S.pending)renderBallot()},0)}});
+
+/* ============ camera thật ============ */
+const CW=900,CH=1200,cv=$('#camCanvas');cv.width=CW;cv.height=CH;const cx=cv.getContext('2d');
+const video=$('#camVideo');
+const cam={phase:'off',flash:0,last:performance.now(),stream:null};
+cam.rot=0;cam.wide=localStorage.getItem('kp-wide')!=='0';cam.zoom=null;
+const SS=.72;
+function camRelease(){if(cam.phase!=='off')cam.phase='live'}
+function beep(){try{const a=beep.ctx||(beep.ctx=new (window.AudioContext||window.webkitAudioContext)());const o=a.createOscillator(),g=a.createGain();o.frequency.value=1046;g.gain.setValueAtTime(.08,a.currentTime);g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+.16);o.connect(g).connect(a.destination);o.start();o.stop(a.currentTime+.17)}catch(e){}}
+function overlayBusy(){return ovMode||$('#modalWrap').classList.contains('open')}
+function camDraw(now){
+  cx.fillStyle='#000';cx.fillRect(0,0,CW,CH);
+  if(cam.phase!=='off'){
+    if(video.readyState>=2)drawVideo(cx,CW,CH,cam.wide);
+    if(!cam.wide){cx.setLineDash([18,12]);cx.strokeStyle=cam.phase==='captured'?'#27a644':'rgba(208,214,224,.7)';cx.lineWidth=3;const gw=SHEET_W*SS,gh=SHEET_H*SS;cx.strokeRect((CW-gw)/2,(CH-gh)/2,gw,gh);cx.setLineDash([])}
+  }
+  const f=now-cam.flash;if(f<380){cx.fillStyle=`rgba(255,255,255,${.5*(1-f/380)})`;cx.fillRect(0,0,CW,CH)}
+}
+let hudKey='';
+function camHud(){
+  const b=S.pending;let msg='',sub='',prog=0,done=false;
+  if(cam.phase==='off'){msg='Chưa mở được camera';sub='Chọn camera ở ô phía trên, hoặc cho phép trình duyệt dùng camera'}
+  else if(cam.phase==='captured'&&b&&!b.rescanning){msg=`Đã chụp xong phiếu #${pad3(b.no)}`;sub='Mời xem bên phải';prog=1;done=true}
+  else if(S.pending&&!b.rescanning){msg='Hãy duyệt phiếu bên phải trước';sub='Máy tạm chưa chụp phiếu mới';}
+  else{msg=b?.rescanning?`Quét lại phiếu #${pad3(b.no)}`:'Đặt phiếu vào khung';sub='Bấm nút Chụp (bản mẫu chưa tự chụp)'}
+  const key=msg+sub+done;if(key!==hudKey){hudKey=key;$('#hudMsg').textContent=msg;$('#hudSub').textContent=sub;$('#hud').classList.toggle('done',done)}
+  $('#hudProg').style.width=(prog*100)+'%';
+}
+function loop(now){const d=Math.min(250,now-cam.last);cam.last=now;camDraw(now);camHud();requestAnimationFrame(loop)}
+document.addEventListener('click',()=>{['#badPop'].forEach(q=>{const p=$(q);if(p)p.hidden=true})});
+function renderCamFoot(){
+  ocrLabel();
+  const f=$('#camFoot');
+  {
+    const z=cam.zoom;
+    f.innerHTML=`<button class="btn btn-sm" id="rotBtn" title="Xoay hình 90°">↻ Xoay${cam.rot?` (${cam.rot}°)`:''}</button>
+      <label class="check" title="Hiện toàn bộ khung hình, thu nhỏ hết cỡ"><input type="checkbox" id="wideChk" ${cam.wide?'checked':''}> Góc rộng</label>
+      ${z?`<label class="check">Thu phóng <input type="range" id="zoomRng" min="${z.min}" max="${z.max}" step="${z.step}" value="${z.v}" style="width:90px"></label>`:''}
+      <span class="spacer"></span><button class="btn btn-sm" id="snap" title="Phím Space">Chụp</button>`;
+    $('#snap').onclick=realSnap;
+    $('#rotBtn').onclick=()=>{cam.rot=(cam.rot+90)%360;localStorage.setItem('kp-rot:'+(cam.dev||''),cam.rot);renderCamFoot()};
+    $('#wideChk').onchange=e=>{cam.wide=e.target.checked;localStorage.setItem('kp-wide',cam.wide?'1':'0');if(cam.wide&&z)setZoom(z.min).then(renderCamFoot)};
+    if(z)$('#zoomRng').oninput=e=>setZoom(+e.target.value);
+  }
+}
+// Vẽ khung hình camera (đã xoay theo cam.rot) vào vùng W×H: wide = hiện toàn bộ khung, không wide = phóng cho đầy vùng.
+function drawVideo(g,W,H,wide){
+  const vw=video.videoWidth,vh=video.videoHeight;if(!vw)return;
+  const q=cam.rot%180!==0,fw=q?vh:vw,fh=q?vw:vh,s=(wide?Math.min:Math.max)(W/fw,H/fh);
+  g.save();g.translate(W/2,H/2);g.rotate(cam.rot*Math.PI/180);g.drawImage(video,-vw*s/2,-vh*s/2,vw*s,vh*s);g.restore()}
+async function setZoom(v){const tr=cam.stream?.getVideoTracks()[0];if(!tr||!cam.zoom)return;try{await tr.applyConstraints({advanced:[{zoom:v}]});cam.zoom.v=v}catch(e){}}
+function realSnap(){
+  if(cam.phase==='off'||video.readyState<2)return;
+  if(S.pending&&!S.pending.rescanning)return toast('Xử lý xong phiếu đang duyệt trước khi chụp phiếu mới.');
+  if(S.locked)return toast('Phiên đã chốt kết quả.');
+  // Chụp nguyên khung hình (đã xoay), không cắt: máy đọc tự tìm 4 góc phiếu để nắn thẳng.
+  const vw=video.videoWidth,vh=video.videoHeight,q=cam.rot%180!==0,fw=q?vh:vw,fh=q?vw:vh,s=Math.min(1,2400/Math.max(fw,fh));
+  const c=document.createElement('canvas');c.width=Math.round(fw*s);c.height=Math.round(fh*s);drawVideo(c.getContext('2d'),c.width,c.height,true);
+  cam.phase='captured';cam.flash=performance.now();beep();onCaptured(c.toDataURL('image/jpeg',.85));
+}
+async function listDevices(sel){
+  const devs=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='videoinput');
+  $('#camSource').innerHTML=(sel?'':`<option value="ask">Chọn camera…</option>`)+devs.map((d,i)=>`<option value="cam:${d.deviceId}">${esc(d.label||'Camera '+(i+1))}</option>`).join('');
+  $('#camSource').value=sel||'ask';
+}
+async function useCamera(id){
+  try{
+    if(cam.stream)cam.stream.getTracks().forEach(t=>t.stop());
+    // Xin độ phân giải cao, tỉ lệ 4:3 (rộng hơn 16:9 theo chiều dọc); trình duyệt chọn mức gần nhất camera có.
+    const res={width:{ideal:3840},height:{ideal:2880}};
+    const st=await navigator.mediaDevices.getUserMedia({video:id?{deviceId:{exact:id},...res}:res,audio:false});
+    cam.stream=st;video.srcObject=st;await video.play();
+    const tr=st.getVideoTracks()[0],zc=tr.getCapabilities?.().zoom;
+    cam.zoom=zc?{min:zc.min,max:zc.max,step:zc.step||.1,v:tr.getSettings().zoom??zc.min}:null;
+    if(cam.zoom&&cam.wide)await setZoom(cam.zoom.min);
+    cam.dev=tr.getSettings().deviceId||'';const saved=localStorage.getItem('kp-rot:'+cam.dev);
+    cam.rot=saved!=null?+saved:(video.videoWidth>video.videoHeight?90:0);
+    const used=st.getVideoTracks()[0].getSettings().deviceId;
+    cam.phase=S.pending&&!S.pending.rescanning?'captured':'live';
+    await listDevices('cam:'+used);$('#liveLbl').textContent=st.getVideoTracks()[0].label||'Camera';
+  }catch(e){
+    if(cam.stream){cam.stream.getTracks().forEach(t=>t.stop());cam.stream=null}
+    cam.phase='off';cam.zoom=null;
+    toast('Chưa mở được camera: '+(e.message||e.name));
+    try{await listDevices(null)}catch(e2){$('#camSource').innerHTML='<option value="ask">Chọn camera…</option>'}
+    $('#liveLbl').textContent='Camera';
+  }
+  renderCamFoot();
+}
+$('#camSource').onchange=e=>{const v=e.target.value;if(v==='ask')useCamera(null);else useCamera(v.slice(4))};
+
+/* ============ chia đôi màn hình ============ */
+(()=>{const split=$('#split'),pane=$('#camPane'),dv=$('#divider');let ratio=+localStorage.getItem('kp-split2')||.38;
+  const apply=()=>pane.style.flexBasis=(ratio*100)+'%';apply();
+  dv.addEventListener('pointerdown',e=>{dv.setPointerCapture(e.pointerId);dv.classList.add('drag');
+    dv.onpointermove=ev=>{const r=split.getBoundingClientRect();ratio=clamp((ev.clientX-r.left)/r.width,.2,.75);apply()};
+    dv.onpointerup=()=>{dv.onpointermove=null;dv.classList.remove('drag');localStorage.setItem('kp-split2',ratio)}});
+  dv.addEventListener('dblclick',()=>{ratio=.38;apply();localStorage.setItem('kp-split2',ratio)});
+})();
+
+/* ============ overlay: danh sách, kết quả, thiết lập ============ */
+let ovMode=null,listFilter='all',listSel=null,listTab='ballots';
+function openOverlay(m){ovMode=m;$('#ov').classList.add('open');({list:renderList,res:renderResults,set:renderSettings})[m]()}
+function closeOverlay(){ovMode=null;$('#ov').classList.remove('open');$('#ovPanel').innerHTML='';if(typeof NOCAM!=='undefined'&&NOCAM)renderList()}
+$('#ov').addEventListener('mousedown',e=>{if(e.target.id==='ov')closeOverlay()});
+$('#btnList').onclick=()=>{if(S.ballots.some(flagOpen)&&listFilter==='all'&&!ovMode)listFilter='flag';if(NOCAM){closeOverlay();renderList()}else openOverlay('list')};$('#btnRes').onclick=()=>openOverlay('res');$('#btnSet').onclick=()=>openOverlay('set');
+const panelHead=(t,extra='')=>`<div class="panel-head"><h2>${t}</h2>${extra}<span class="spacer"></span><button class="btn btn-sm" data-close-ov>Đóng</button></div>`;
+$('#ovPanel').addEventListener('click',e=>{if(e.target.closest('[data-close-ov]'))closeOverlay()});
+
+function ballotNote(b){const n=[];const ed=b.rows.filter(rowEdited).length,vd=b.rows.filter(r=>evalRow(r).status==='void').length;
+  if(ed)n.push(`sửa ${ed}`);if(vd)n.push(`${vd} dòng không hợp lệ`);if(b.rescans)n.push(`quét lại ${b.rescans}`);if(b.version>1)n.push(`bản ${b.version}`);if(b.status==='invalid')n.push(b.reason);return n.join(' · ')}
+/* ---- mã QR cho điện thoại: máy chủ tự lấy IP mạng nội bộ của Mac và vẽ QR (không cần mạng ngoài) ---- */
+const QR={url:null};
+async function loadQr(){try{const j=await (await fetch(OCR.url+'/phone-url',{cache:'no-store'})).json();if(j.url!==QR.url){QR.url=j.url;return true}}catch(e){}return false}
+function qrHtml(big){
+  if(!QR.url)return`<div class="qrbox"><b>Chưa có địa chỉ cho điện thoại</b><span class="hint">Máy Mac chưa nối Wi-Fi/mạng nội bộ, hoặc máy chủ chưa bật. Nối mạng rồi mở lại.</span></div>`;
+  return`<div class="qrbox"><img src="${OCR.url}/qr.png?u=${encodeURIComponent(QR.url)}" alt="Mã QR ${esc(QR.url)}"${big?'':' style="width:200px;height:200px"'}>
+    <span class="url">${esc(QR.url)}</span>
+    <span class="hint">Điện thoại cùng Wi-Fi với máy Mac. Báo "không an toàn" thì bấm Nâng cao → Tiếp tục.</span></div>`}
+async function showQr(){await loadQr();openModal(`<h3>Điện thoại quét để vào trang quét phiếu</h3>${qrHtml(true)}<div class="acts"><button class="btn" data-close>Đóng</button></div>`)}
+$('#btnQr').onclick=showQr;
+loadQr().then(ch=>{if(ch)refreshList()});
+/* ---- các máy đang kết nối (máy chủ báo kèm mỗi lần hỏi /state) ---- */
+const devLabel=d=>d.kind==='phone'?'Điện thoại':'Máy tính';
+function renderDevices(){
+  const b=$('#btnDev');if(!b)return;const ds=SH.devices||[],on=ds.filter(d=>d.online),ph=on.filter(d=>d.kind==='phone');
+  b.hidden=!SH.on;const dup=on.some(d=>d.dupName);b.classList.toggle('warn',dup);
+  b.innerHTML=`<span class="devdot${on.length?'':' off'}"></span>${ph.length} ĐT${dup?' · trùng tên':''}`;
+  b.title=(on.length?`${on.length} máy đang kết nối: `+on.map(d=>d.name).join(', '):'Chưa có máy nào kết nối')+' · bấm để xem chi tiết';
+  const l=$('#devLine');if(l)l.textContent=ph.length?'Điện thoại đang nối: '+ph.map(d=>d.name).join(', '):'Chưa có điện thoại nào nối';
+  if($('#devModal'))$('#devModal').innerHTML=devTable();
+}
+function devTable(){
+  const ds=SH.devices||[],cnt=n=>S.ballots.filter(b=>(b.station||'')===n).length;
+  if(!ds.length)return'<p class="muted">Chưa có máy nào kết nối. Cho điện thoại quét mã QR để vào trang quét phiếu.</p>';
+  return`<table class="devtbl"><thead><tr><th>Tên máy</th><th>Loại</th><th>Địa chỉ</th><th>Trạng thái</th><th class="num">Phiếu đã quét</th></tr></thead><tbody>${ds.map(d=>`<tr><td style="color:var(--paper)">${esc(d.name)}${d.name===STATION.name&&d.kind!=='phone'?' <span class="muted">(máy này)</span>':''}${d.dupName?'<div class="warnc">Trùng tên với máy khác: đổi tên trên 1 máy để phân biệt phiếu</div>':''}</td><td class="muted">${devLabel(d)}</td><td class="mono muted">${esc(d.ip)}</td><td><span class="devdot${d.online?'':' off'}"></span>${d.online?'Đang kết nối':'Ngắt lúc '+tm(d.last)}</td><td class="num">${cnt(d.name)}</td></tr>`).join('')}</tbody></table>`}
+$('#btnDev').onclick=()=>openModal(`<h3>Các máy kết nối với máy chủ</h3><div id="devModal">${devTable()}</div><div class="acts"><button class="btn" data-close>Đóng</button></div>`);
+const flagOpen=b=>!!(b.flag&&!b.flag.done);
+function setFlagDone(b,done){
+  if(!b?.flag)return;
+  b.flag.done=done?{by:STATION.name,at:Date.now()}:null;hist(b,done?'Máy tính duyệt cờ':'Bỏ duyệt cờ');
+  if(SH.on)fetch(OCR.url+'/flag',{method:'POST',headers:SH.hdr(),body:JSON.stringify({no:b.no,done})}).then(r=>r.json()).then(j=>{if(j.error)toast(j.error)}).catch(()=>toast('Mất kết nối máy chủ, chưa lưu được trạng thái cờ.'));
+  renderTop();refreshList();
+}
+let listStation='',listSort={k:'no',d:-1};
+const NOCAM=localStorage.getItem('kp-desk-cam')!=='1';  // mặc định máy tính chỉ duyệt, điện thoại quét
+document.body.classList.toggle('nocam',NOCAM);
+const listTarget=()=>ovMode==='list'?$('#ovPanel'):NOCAM?$('#listPane'):null;
+const refreshList=()=>{if(listTarget())renderList()};
+function renderList(){
+  const P=listTarget();if(!P)return;const inPane=P.id==='listPane';
+  const all=S.ballots;const bv=S.cfg.blankRule==='valid';
+  const F={all:()=>true,valid:b=>b.status==='valid'||(bv&&b.status==='blank'),invalid:b=>b.status==='invalid'||(!bv&&b.status==='blank'),flag:flagOpen};
+  const L={all:'Tất cả',valid:'Hợp lệ',invalid:'Không hợp lệ',flag:'⚑ Chờ duyệt cờ'};
+  const stations=[...new Set(all.map(b=>b.station||''))].sort((a,b)=>a.localeCompare(b,'vi',{numeric:true}));
+  if(listStation&&!stations.includes(listStation))listStation='';
+  const inSt=b=>!listStation||(b.station||'')===listStation;
+  const ST_ORD={valid:0,blank:1,invalid:2};
+  const KEY={no:b=>b.no,station:b=>(b.station||'')+'\u0000'+String(b.no).padStart(6,'0'),time:b=>b.decidedAt||0,status:b=>ST_ORD[b.status]??3,n:b=>b.votes.length,flag:b=>flagOpen(b)?0:b.flag?1:2};
+  const cmp=(a,b)=>{const x=KEY[listSort.k](a),y=KEY[listSort.k](b);return (typeof x==='string'?x.localeCompare(y,'vi',{numeric:true}):x-y)*listSort.d||(b.no-a.no)};
+  const rows=all.filter(inSt).filter(F[listFilter]).sort(cmp);
+  const th=(k,t,cls='')=>`<th class="sortable ${cls}${listSort.k===k?' on':''}" data-sort="${k}">${t}${listSort.k===k?(listSort.d>0?' ↑':' ↓'):''}</th>`;
+  const sel=all.find(b=>b.no===listSel)||rows[0];listSel=sel?.no??null;
+  const nOpen=all.filter(inSt).filter(flagOpen).length;
+  const bar=`<div class="list-bar">${Object.keys(F).map(k=>`<button class="tab ${listFilter===k?'on':''}${k==='flag'&&nOpen?' warnc':''}" data-filter="${k}">${L[k]} <span class="muted">${all.filter(inSt).filter(F[k]).length}</span></button>`).join('')}
+    <span class="spacer" style="flex:1"></span><label class="muted" style="font-size:12px">Máy quét</label>
+    <select class="sel" id="fStn"><option value="">Mọi máy (${all.length})</option>${stations.map(s=>`<option value="${esc(s)}" ${s===listStation?'selected':''}>${esc(s||'(không tên)')} (${all.filter(b=>(b.station||'')===s).length})</option>`).join('')}</select></div>`;
+  const table=bar+`<table><thead><tr>${th('flag','⚑','flagc')}${th('no','Mã phiếu')}${th('station','Máy quét')}${th('time','Giờ')}${th('status','Kết luận')}${th('n','Số người','num')}</tr></thead><tbody>
+      ${rows.map(b=>{const st=statusInfo(b.status,b.reason,b.votes.length);const fo=flagOpen(b);
+        return`<tr class="click ${b.no===listSel?'sel':''}${fo?' flagged':''}" data-no="${b.no}"><td class="flagc">${fo?`<span class="fl on" title="${esc(b.flag.note||'Nhờ máy tính duyệt')}">⚑</span>`:b.flag?'<span class="fl done" title="Cờ đã duyệt">⚑</span>':''}</td><td class="mono" style="color:var(--paper)">#${pad3(b.no)}${b.rows.some(r=>rowEdited(r)||evalRow(r).status==='void')||b.version>1?` <span class="muted" style="font-size:14px;font-family:var(--font)" title="${esc(ballotNote(b))}">· đã sửa</span>`:''}</td><td class="muted">${esc(b.station||'')}</td><td class="muted">${tm(b.decidedAt)}</td><td><span class="chip ${st.cls}">${st.short}</span>${b.status==='blank'?' <span class="muted" style="font-size:14px">trắng</span>':''}</td><td class="num">${b.votes.length||'–'}</td></tr>`}).join('')||`<tr><td colspan="6" class="muted" style="padding:24px 12px">${all.length?'Không có phiếu nào khớp bộ lọc.':`Chưa có phiếu nào được ghi nhận.`}</td></tr>`}
+      </tbody></table>`;
+  let detail='<div class="detail muted">Chọn 1 phiếu để xem ảnh ghép.</div>';
+  if(sel){const st=statusInfo(sel.status,sel.reason,sel.votes.length);const f=sel.flag;
+    if(!sel.composite)makeComposite(sel).then(()=>listSel===sel.no&&refreshList());
+    const flagHtml=!f?'':!f.done?`<div class="flagcard"><b>⚑ ${esc(f.by||sel.station||'Điện thoại')} nhờ duyệt</b> <span class="muted">lúc ${tm(f.at)}</span>
+        ${f.note?`<div class="fnote">${esc(f.note)}</div>`:''}
+        <div class="acts"><button class="btn btn-sm" data-reopen="${sel.no}" ${S.locked?'disabled':''}>Mở lại để sửa</button><button class="btn btn-sm btn-primary${sel.status==='invalid'?' btn-danger':''}" data-fdone="${sel.no}">${sel.status==='invalid'?'Đúng, không hợp lệ':'Đã duyệt, phiếu đúng'}</button></div></div>`
+      :`<div class="flagcard done">⚑ Cờ của ${esc(f.by||sel.station||'')}${f.note?` (“${esc(f.note)}”)`:''} đã duyệt bởi ${esc(f.done.by||'')} lúc ${tm(f.done.at)} <button class="link" data-fundo="${sel.no}">Bỏ duyệt</button></div>`;
+    detail=`<div class="detail"><h3>Phiếu #${pad3(sel.no)} <span class="chip ${st.cls}" style="margin-left:6px">${esc(st.label)}</span></h3>
+      <div class="muted" style="font-size:12px;margin-bottom:12px">${esc(sel.station||'?')} · ${dt(sel.capturedAt)}</div>
+      ${flagHtml}
+      ${sel.composite?`<img class="comp" src="${sel.composite}" data-zoom alt="Ảnh ghép">`:'<div class="muted">Đang tạo ảnh ghép…</div>'}
+      <div style="display:flex;gap:16px;align-items:center;margin-top:12px"><button class="btn btn-sm" data-dl="${sel.no}" ${sel.composite?'':'disabled'}>Tải ảnh</button>${f&&!f.done?'':`<button class="link" data-reopen="${sel.no}" ${S.locked?'disabled':''}>Mở lại để sửa</button>`}</div>
+      <div class="sect"><h4>Người được bầu</h4><ul class="vlist">${sel.votes.map(s=>`<li><span class="mono muted">${pad(s)}</span>${esc(cand(s).name)}</li>`).join('')||'<li class="muted">Không tính phiếu cho ai</li>'}</ul></div>
+</div>`}
+  const grid=`<div class="list-grid"${inPane&&S.pending?' style="grid-template-columns:minmax(0,1fr)"':''}><div>${table}</div>${inPane&&S.pending?'':detail}</div>`;
+  P.innerHTML=inPane?`<div class="pane-head"><span class="pane-title">Phiếu đã quét</span><span class="lbl" id="ocrLbl2"></span></div><div class="list-wrap">${grid}</div>`
+    :panelHead('Danh sách phiếu đã ghi nhận')+`<div class="panel-body">${grid}</div>`;
+  if(inPane){ocrLabel();renderDevices()}
+  P.querySelectorAll('[data-filter]').forEach(x=>x.onclick=()=>{listFilter=x.dataset.filter;listSel=null;renderList()});
+  P.querySelectorAll('[data-sort]').forEach(x=>x.onclick=()=>{const k=x.dataset.sort;listSort=listSort.k===k?{k,d:-listSort.d}:{k,d:k==='no'||k==='time'?-1:1};renderList()});
+  $('#fStn').onchange=e=>{listStation=e.target.value;listSel=null;renderList()};
+  P.querySelectorAll('tr[data-no]').forEach(x=>x.onclick=()=>{listSel=+x.dataset.no;renderList()});
+  P.querySelectorAll('[data-fdone]').forEach(x=>x.onclick=()=>{const b=S.ballots.find(z=>z.no===+x.dataset.fdone);setFlagDone(b,true);toast(`Đã duyệt cờ phiếu #${pad3(b.no)}`,'Hoàn tác',()=>setFlagDone(b,false),6000)});
+  P.querySelectorAll('[data-fundo]').forEach(x=>x.onclick=()=>setFlagDone(S.ballots.find(z=>z.no===+x.dataset.fundo),false));
+  P.querySelectorAll('[data-dl]').forEach(x=>x.onclick=()=>{const b=S.ballots.find(z=>z.no===+x.dataset.dl);const a=document.createElement('a');a.href=b.composite;a.download=`phieu-${pad3(b.no)}${b.version>1?'_v'+b.version:''}_${{valid:'hop-le',blank:'trang',invalid:'khong-hop-le'}[b.status]}.jpg`;a.click()});
+  P.querySelectorAll('[data-zoom]').forEach(x=>x.onclick=()=>{const z=document.createElement('div');z.className='zoomed';z.innerHTML=`<img src="${x.src}">`;z.onclick=()=>z.remove();document.body.appendChild(z)});
+  P.querySelectorAll('[data-reopen]').forEach(x=>x.onclick=()=>{const b=S.ballots.find(z=>z.no===+x.dataset.reopen);reopen(b,flagOpen(b)?'Duyệt cờ từ '+(b.flag.by||b.station||'điện thoại'):'Người duyệt mở lại để sửa')});
+}
+function renderResults(){
+  const{t,rows}=standings();const c=S.cfg;const issued=+c.issued||0;
+  const nOver=rows.filter(r=>r.over50).length,nTop=rows.filter(r=>r.top).length;
+  const diff=issued?issued-t.total:null;
+  $('#ovPanel').innerHTML=panelHead('Kết quả kiểm phiếu',`<span class="chip ${S.locked?'ok':'dec'}">${S.locked?'Đã chốt '+tm(S.locked):'Kết quả tạm thời'}</span>`)+`<div class="panel-body">
+    <div class="res-grid">
+      <div class="card"><div class="l">Phiếu phát ra</div><input id="issued" type="number" min="0" value="${issued||''}" placeholder="nhập" ${S.locked?'disabled':''}><div class="s">thư ký nhập tay</div></div>
+      <div class="card"><div class="l">Đã ghi nhận</div><div class="v">${t.total}</div><div class="s">${diff==null?'':diff===0?'khớp số phát ra':diff>0?`còn ${diff} chưa quét / chưa thu về`:`dư ${-diff} so với phát ra`}</div></div>
+      <div class="card"><div class="l">Hợp lệ</div><div class="v">${t.valid}</div><div class="s">${t.validVoted} có chọn người${c.blankRule==='valid'?` + ${t.blank} trắng`:''}</div></div>
+      <div class="card"><div class="l">Phiếu trắng</div><div class="v">${t.blank}</div><div class="s">tính là ${c.blankRule==='valid'?'hợp lệ':'không hợp lệ'}</div></div>
+      <div class="card"><div class="l">Không hợp lệ</div><div class="v">${t.invalidAll}</div><div class="s">${t.invalid} phiếu bị loại${c.blankRule==='invalid'?` + ${t.blank} trắng`:''}</div></div>
+    </div>
+    <p class="note">Tỉ lệ = số phiếu ÷ ${t.denom} phiếu hợp lệ · ${nOver} người từ 50% trở lên · ${nTop} người dẫn đầu${nTop>TOP_N?` (bằng phiếu ở vị trí ${TOP_N} nên quá ${TOP_N})`:''}</p>
+    <table class="rank"><thead><tr><th class="num">STT</th><th>Số ứng viên</th><th>Họ và tên</th><th class="num">Số phiếu</th><th class="num">Tỉ lệ</th><th>≥ 50%</th></tr></thead><tbody>
+    ${rows.map((r,i)=>`<tr class="${r.top?'lead':''}${r.top&&!rows[i+1]?.top?' edge':''}"><td class="num muted">${i+1}</td><td class="mono muted">${pad(r.c.stt)}</td><td class="nm">${esc(r.c.name)}</td><td class="num">${r.v}</td><td class="num">${r.pct.toFixed(1)}%</td><td>${r.over50?'<span class="chip ok">≥ 50%</span>':''}</td></tr>`).join('')}
+    </tbody></table></div>
+    <div class="panel-foot"><span class="spacer"></span><button class="btn" id="csv">Xuất Excel</button>${S.locked?`<button class="btn" id="unlock">Mở khóa phiên</button>`:`<button class="btn btn-primary" id="lock">Chốt kết quả</button>`}</div>`;
+  $('#issued')&&($('#issued').onchange=e=>{S.cfg.issued=+e.target.value||0;log(`Nhập số phiếu phát ra: ${S.cfg.issued}`);pushCfg({cfg:S.cfg,note:`Số phiếu phát ra: ${S.cfg.issued}`});renderTop();renderResults()});
+  $('#csv').onclick=exportCsv;
+  $('#lock')&&($('#lock').onclick=()=>{if(S.pending)return toast('Còn phiếu đang chờ duyệt, xử lý xong trước khi chốt.');
+    const nf=S.ballots.filter(flagOpen).length;if(nf)return toast(`Còn ${nf} phiếu điện thoại gắn cờ chưa duyệt. Vào Danh sách, tab Chờ duyệt cờ.`,'Mở',()=>{listFilter='flag';if(NOCAM){closeOverlay();renderList()}else openOverlay('list')},6000);
+    openModal(`<h3>Chốt kết quả?</h3><p>Sau khi chốt, app không nhận thêm phiếu và không cho sửa phiếu. Đã ghi nhận ${t.total} phiếu${issued?` / phát ra ${issued}`:''}.</p><div class="acts"><button class="btn" data-close>Không, quay lại</button><button class="btn btn-white" id="lkOk">Chốt kết quả</button></div>`);
+    $('#lkOk').onclick=()=>{S.locked=Date.now();log('Chốt kết quả');pushCfg({locked:S.locked,note:'Chốt kết quả'});closeModal();renderAll()}});
+  $('#unlock')&&($('#unlock').onclick=()=>{openModal(`<h3>Mở khóa phiên</h3><p>Mở khóa sẽ cho quét và sửa tiếp.</p><textarea id="ulNote" placeholder="Lý do (không bắt buộc)"></textarea><div class="acts"><button class="btn" data-close>Không, quay lại</button><button class="btn btn-white" id="ulOk">Mở khóa để sửa tiếp</button></div>`);
+    $('#ulOk').onclick=()=>{const r=$('#ulNote').value.trim()||'Mở khóa để sửa tiếp';S.locked=null;log('Mở khóa phiên: '+r);pushCfg({locked:null,note:'Mở khóa phiên: '+r});closeModal();renderAll()}});
+}
+function downloadCsv(L,name){const q=s=>`"${String(s).replace(/"/g,'""')}"`;const csv='﻿'+L.map(r=>r.map(q).join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=name;a.click()}
+function exportCsv(){
+  const{t,rows}=standings();
+  const L=[['Kết quả kiểm phiếu',S.cfg.session],[],['Phiếu phát ra',S.cfg.issued||''],['Đã ghi nhận',t.total],['Hợp lệ',t.valid],['Phiếu trắng',t.blank],['Không hợp lệ',t.invalidAll],['Mẫu số tính tỉ lệ (tổng phiếu hợp lệ)',t.denom],[],
+    ['STT','Số ứng viên','Họ và tên','Số phiếu','Tỉ lệ %','Từ 50% trở lên',`Trong ${TOP_N} người dẫn đầu`],...rows.map((r,i)=>[i+1,pad(r.c.stt),r.c.name,r.v,r.pct.toFixed(2),r.over50?'Có':'',r.top?'Có':'']),[],
+    ['Mã phiếu','Máy quét','Giờ duyệt','Kết luận','Lý do','STT được bầu','Ghi chú','Cờ'],...[...S.ballots].sort((a,b)=>a.no-b.no).map(b=>['#'+pad3(b.no),b.station||'',dt(b.decidedAt),statusInfo(b.status,b.reason,0).short,b.reason||'',b.votes.map(pad).join(' '),ballotNote(b),!b.flag?'':b.flag.done?`Đã duyệt (${b.flag.done.by})${b.flag.note?': '+b.flag.note:''}`:`Chờ duyệt${b.flag.note?': '+b.flag.note:''}`])];
+  downloadCsv(L,'ket-qua-kiem-phieu.csv');
+}
+function renderSettings(){
+  const c=S.cfg,has=S.ballots.length>0||!!S.pending;
+  $('#ovPanel').innerHTML=panelHead('Thiết lập phiên')+`<div class="panel-body"><div class="form">
+    <div class="field span2"><label>Tên bàn (riêng máy này, in lên ảnh ghép và danh sách phiếu)</label><input class="inp" id="fStation" value="${esc(STATION.name)}" placeholder="Bàn 1"></div>
+    <div class="field span2"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="fCam" ${NOCAM?'':'checked'}> Dùng camera trên máy tính này (tắt: máy tính chỉ xem và duyệt phiếu do điện thoại quét)</label></div>
+    <div class="field span2"><label>Tên cuộc bầu</label><input class="inp" id="fSess" value="${esc(c.session)}"></div>
+    <div class="field"><label>Phiếu trắng tính là</label><select id="fBlank"><option value="valid" ${c.blankRule==='valid'?'selected':''}>Hợp lệ (vào mẫu số)</option><option value="invalid" ${c.blankRule==='invalid'?'selected':''}>Không hợp lệ</option></select></div>
+    <div class="field span2"><span class="hint">Quy tắc cố định: mẫu số tỉ lệ là tổng phiếu hợp lệ; ghi trùng 1 người ở 2 dòng thì cả phiếu không hợp lệ.</span></div>
+    <div class="field span2"><label style="display:flex;align-items:center;gap:10px">Danh sách ứng viên (mỗi dòng: STT họ tên — có thể dán thẳng từ Excel)<span class="spacer" style="flex:1"></span><button class="btn btn-sm" id="impCands" type="button" ${has?'disabled':''}>Nhập từ file Word / Excel</button><input type="file" id="impFile" accept=".xlsx,.xlsm,.docx,.csv,.txt,.xls,.doc" hidden></label><span class="hint" id="hCands"></span>${has?'<span class="hint">Đã có phiếu, không sửa danh sách được. Muốn sửa: Xóa dữ liệu phiên trước.</span>':''}<textarea id="fCands" style="min-height:360px" ${has?'disabled':''}>${esc(S.cands.map(x=>pad(x.stt)+' '+x.name).join('\n'))}</textarea></div>
+    <div class="field span2" style="flex-direction:row;gap:16px"><button class="link" id="wipe">Xóa dữ liệu phiên (bản mẫu)</button></div>
+  </div></div>
+  <div class="panel-foot"><button class="btn btn-text" data-close-ov>Hủy</button><button class="btn btn-primary" id="saveSet">Lưu thiết lập</button></div>`;
+  const candInfo=()=>{const r=checkCands($('#fCands').value),h=$('#hCands');if(!h)return r;
+    const st=r.list.map(x=>x.stt),w=[];
+    if(r.dup.length)w.push('trùng STT '+r.dup.slice(0,5).map(pad).join(', '));
+    if(r.out.length)w.push('STT ngoài 1–999');
+    if(r.bad.length)w.push(r.bad.length+' dòng không đọc được');
+    h.textContent=`Đang có ${r.list.length} người`+(st.length?` · STT từ ${pad(Math.min(...st))} đến ${pad(Math.max(...st))}`:'')+(w.length?' · Cảnh báo: '+w.join('; '):'');
+    h.style.color=w.length?'var(--bad-ink)':'';return r};
+  candInfo();$('#fCands').oninput=candInfo;
+  $('#impCands').onclick=()=>{$('#impFile').value='';$('#impFile').click()};
+  $('#impFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;
+    let r;try{r=await importCandFile(f)}catch(err){return toast('Không đọc được '+f.name+': '+err.message,null,null,6000)}
+    if(!r.list.length)return toast('Không tìm thấy họ tên nào trong '+f.name+'. Cần cột STT và cột Họ và tên.',null,null,6000);
+    const txt=r.list.map(x=>pad(x.stt)+' '+x.name).join('\n'),ta=$('#fCands'),cur=ta.value.trim();
+    const apply=mode=>{ta.value=mode==='add'&&cur?cur+'\n'+txt:txt;closeModal();candInfo();
+      toast(`Đã nạp ${r.list.length} người từ ${f.name}${r.autoStt?` (${r.autoStt} người chưa có STT, máy tự đánh số)`:''}. Kiểm tra rồi bấm Lưu thiết lập.`,null,null,6000)};
+    if(!cur)return apply('replace');
+    openModal(`<h3>Nạp ${r.list.length} người từ ${esc(f.name)}</h3><p>${esc(r.list.slice(0,4).map(x=>pad(x.stt)+' '+x.name).join(' · '))}${r.list.length>4?' …':''}</p><p>Danh sách đang có ${parseCands(cur).list.length} người. Thay toàn bộ hay thêm vào cuối?</p><div class="acts"><button class="btn" data-close>Hủy</button><button class="btn" id="impAdd">Thêm vào cuối</button><button class="btn btn-white" id="impRep">Thay toàn bộ</button></div>`);
+    $('#impAdd').onclick=()=>apply('add');$('#impRep').onclick=()=>apply('replace')};
+  $('#saveSet').onclick=()=>{
+    const n={session:$('#fSess').value.trim()||c.session,operator:c.operator,seats:NUM_ROWS,blankRule:$('#fBlank').value};
+    if(!has){const r=checkCands($('#fCands').value);
+      if(r.list.length<2)return toast('Cần ít nhất 2 người trong danh sách.');
+      if(r.dup.length)return toast('STT '+r.dup.slice(0,5).map(pad).join(', ')+' bị trùng.');
+      if(r.out.length)return toast('STT phải từ 1 đến 999 (sai: '+r.out.slice(0,3).join(', ')+').');
+      if(r.bad.length)return toast('Dòng không đọc được: '+r.bad.slice(0,3).join(' | '));
+      setCands(r.list);try{localStorage.setItem('kp-cands',$('#fCands').value)}catch(e){}}
+    const changed=Object.keys(n).filter(k=>n[k]!==c[k]);Object.assign(c,n);
+    if(changed.length){log(`Đổi thiết lập: ${changed.join(', ')}`);for(const b of S.ballots){const r=computeBallot(b);if(r.status!==b.status||r.votes.join()!==b.votes.join()){b.status=r.status;b.reason=r.reason;b.votes=r.votes;b.composite=null;hist(b,'Tính lại theo thiết lập mới')}}}
+    const stn=$('#fStation').value.trim();if(stn&&stn!==STATION.name){STATION.name=stn;localStorage.setItem('kp-station',stn)}
+    pushCfg(has?{cfg:S.cfg,note:'Đổi thiết lập'}:{cfg:S.cfg,cands:S.cands,note:'Đổi thiết lập'});
+    const wantCam=$('#fCam').checked;if(wantCam===NOCAM){localStorage.setItem('kp-desk-cam',wantCam?'1':'0');return location.reload()}
+    closeOverlay();renderCamFoot();renderAll();toast('Đã lưu thiết lập');
+  };
+  $('#wipe').onclick=()=>{openModal(`<h3>Xóa toàn bộ dữ liệu phiên?</h3><p>Chỉ có trong bản mẫu để thử lại từ đầu. App thật không có nút này.${SH.on?' Xóa ở MỌI bàn (máy chủ vẫn giữ 1 bản sao để phòng xóa nhầm).':''}</p><div class="acts"><button class="btn" data-close>Không, quay lại</button><button class="btn btn-white" id="wpOk">Xóa hết dữ liệu</button></div>`);
+    $('#wpOk').onclick=()=>{if(SH.on)fetch(OCR.url+'/wipe',{method:'POST',headers:SH.hdr(),body:'{}'}).then(()=>{SH.rev=0}).catch(()=>{});S.ballots=[];S.pending=null;S.nextNo=1;S.locked=null;S.log=[];closeModal();closeOverlay();camRelease();renderAll()}};
+}
+
+/* ============ nhiều bàn: đồng bộ với kho phiếu chung trên máy chủ ============ */
+// Mỗi máy 1 tên bàn (lưu trên máy). Máy chủ giữ phiếu đã duyệt + thiết lập chung; mỗi bàn hỏi thay đổi 1,5 giây/lần.
+const STATION={name:localStorage.getItem('kp-station')||'Bàn 1'};
+const SH={on:false,ok:false,epoch:null,rev:0,first:true,hdr:()=>({'Content-Type':'application/json','X-Station':encodeURIComponent(STATION.name)})};
+const PUSH_SKIP=new Set(['composite','crops','raw','snapshot','reopened','reading','rescanning','cropping','unsynced']);
+async function pushBallot(b){
+  if(!SH.on)return;
+  const body=JSON.stringify({ballot:Object.fromEntries(Object.entries(b).filter(([k])=>!PUSH_SKIP.has(k)))});
+  try{
+    const r=await fetch(OCR.url+'/ballot',{method:'POST',headers:SH.hdr(),body});const j=await r.json();
+    if(r.ok){b.unsynced=false;return}
+    b.unsynced=false;
+    if(r.status===409&&j.current){toast(b.version===1?j.error:`Phiếu #${pad3(b.no)} vừa được bàn khác sửa trước. Đã lấy bản của bàn đó; mở lại nếu cần sửa tiếp.`,null,null,7000);takeBallot(j.current);renderAll()}
+    else toast(j.error||'Máy chủ không nhận phiếu',null,null,6000);
+  }catch(e){b.unsynced=true;SH.ok=false;ocrLabel()}  // mất mạng: giữ lại, tự gửi khi nối lại
+}
+function pushCfg(body){if(SH.on)fetch(OCR.url+'/cfg',{method:'POST',headers:SH.hdr(),body:JSON.stringify(body)}).catch(()=>{})}
+function takeBallot(x){
+  // Phiếu từ máy chủ: tính lại kết luận theo thiết lập hiện tại (giống nhau ở mọi bàn).
+  const b={...x,composite:null};b.photo=b.photo&&b.photo.startsWith('/')?OCR.url+b.photo:b.photo;
+  b.rows=(b.rows||[]).map(r=>({...r,o0:r.o0||{stt:r.stt}}));b.history=b.history||[];
+  if(b.rows.length){const c=computeBallot(b);b.status=c.status;b.reason=c.reason;b.votes=c.votes}
+  const i=S.ballots.findIndex(y=>y.no===b.no);
+  if(i<0)S.ballots.push(b);else{const old=S.ballots[i];if(old.version===b.version&&old.composite)b.composite=old.composite;S.ballots[i]=b}
+  if(S.pending&&S.pending.no===b.no&&S.pending.reopened&&S.pending.version<b.version)toast(`Phiếu #${pad3(b.no)} đang sửa vừa được bàn khác sửa. Bấm Hủy sửa rồi mở lại để thấy bản mới.`,null,null,7000);
+}
+async function syncOnce(){
+  const r=await fetch(`${OCR.url}/state?since=${SH.rev}${SH.epoch?'&epoch='+SH.epoch:''}`,{cache:'no-store',headers:{'X-Station':encodeURIComponent(STATION.name)}});const st=await r.json();
+  SH.devices=st.devices||[];renderDevices();
+  if(st.full&&SH.epoch&&SH.epoch!==st.epoch){S.ballots=[];if(S.pending&&!S.pending.reopened){S.pending=null;camRelease()}toast('Dữ liệu phiên vừa được xóa ở máy chủ.')}
+  if(st.full)S.ballots=S.ballots.filter(b=>b.unsynced);
+  if(SH.first&&!st.cfg){pushCfg({cfg:S.cfg,cands:S.cands,note:'Thiết lập ban đầu'})}  // máy đầu tiên: đưa thiết lập lên
+  else if(st.cfg){const keep=S.cfg.operator;Object.assign(S.cfg,st.cfg);S.cfg.rows=NUM_ROWS;S.cfg.seats=NUM_ROWS;S.cfg.operator=st.cfg.operator||keep;
+    if(st.cands&&JSON.stringify(st.cands)!==JSON.stringify(S.cands.map(c=>({stt:c.stt,name:c.name}))))setCands(st.cands)}
+  S.locked=st.locked;S.nextNo=st.nextNo;
+  st.ballots.forEach(takeBallot);
+  const changed=st.full||st.ballots.length||st.rev!==SH.rev;
+  SH.epoch=st.epoch;SH.rev=st.rev;SH.first=false;
+  for(const b of S.ballots)if(b.unsynced)await pushBallot(b);
+  return changed;
+}
+async function syncLoop(){
+  const was=SH.ok;let changed=false;
+  try{changed=await syncOnce();SH.ok=true}catch(e){SH.ok=false;SH.devices=[];renderDevices()}
+  if(was!==SH.ok)ocrLabel();
+  if(changed){renderTop();if(!S.pending)renderBallot();refreshList();if(ovMode==='res')renderResults()}
+  setTimeout(syncLoop,SH.ok?1500:3000);
+}
+
+/* ============ modal + toast ============ */
+function openModal(html){$('#modal').innerHTML=html;$('#modalWrap').classList.add('open');$('#modal').querySelectorAll('[data-close]').forEach(x=>x.onclick=closeModal)}
+function closeModal(){$('#modalWrap').classList.remove('open')}
+let toastTimer;
+function toast(msg,act,fn,ms=3200){const t=$('#toast');t.innerHTML=`<span>${esc(msg)}</span>${act?`<button class="btn btn-sm">${esc(act)}</button>`:''}`;if(act)t.querySelector('button').onclick=()=>{t.classList.remove('show');fn()};t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),ms)}
+
+/* ============ phím tắt ============ */
+document.addEventListener('keydown',e=>{
+  const ae=document.activeElement,typing=['INPUT','TEXTAREA','SELECT'].includes(ae?.tagName);
+  if($('#modalWrap').classList.contains('open')){if(e.key==='Escape')closeModal();return}
+  if(document.querySelector('.zoomed')&&e.key==='Escape'){document.querySelector('.zoomed').remove();return}
+  if(ovMode){if(e.key==='Escape')closeOverlay();return}
+  if((e.metaKey||e.ctrlKey)&&e.key==='Enter'){e.preventDefault();ae?.blur?.();accept();return}
+  if(typing){
+    if(e.key==='Enter'&&ae.dataset.fk){e.preventDefault();const all=[...document.querySelectorAll('#ballotBody [data-fk]:not(:disabled)')];const nx=all[all.indexOf(ae)+1];nx?nx.focus():ae.blur()}
+    if(e.key==='Escape')ae.blur();return}
+  if(e.metaKey||e.ctrlKey||e.altKey)return;
+  const k=e.key.toLowerCase();
+  if(k==='enter'){e.preventDefault();accept()}else if(k==='r')rescan();else if(k==='i'){const p=$('#badPop');if(p)p.hidden=!p.hidden}else if(k==='l')$('#btnList').click();else if(k==='k')openOverlay('res');else if(k===' '){e.preventDefault();realSnap()}
+});
+
+function renderAll(){renderTop();renderBallot();refreshList();if(ovMode==='res')renderResults()}
+setCands(parseCands(loadCandText()).list);renderCamFoot();pingOcr();setInterval(pingOcr,8000);renderAll();if(!NOCAM){requestAnimationFrame(loop);useCamera(null)}
+</script>
+</body>
+</html>

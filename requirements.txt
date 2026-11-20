@@ -1,0 +1,14 @@
+# Môi trường chính (.venv): máy chủ kiểm phiếu, đọc STT, VietOCR, sinh phiếu
+numpy
+opencv-python
+pillow
+scipy
+torch
+torchvision
+vietocr
+pymupdf
+python-docx
+reportlab
+# Apple Vision (chỉ macOS)
+pyobjc-framework-Cocoa
+pyobjc-framework-Vision

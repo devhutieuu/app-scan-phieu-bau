@@ -1,0 +1,26 @@
+# Môi trường Python (tạo lại bằng README)
+.venv/
+.venv-tf/
+.venv-mlx/
+__pycache__/
+*.pyc
+.DS_Store
+
+# Dữ liệu thật: phiếu đã quét, danh sách ứng viên/cử tri, trạng thái phiên
+out/
+docs/*.xlsx
+
+# Khóa riêng, chứng chỉ, API key (tạo bằng tools/make_cert.sh)
+config/key.pem
+config/cert.pem
+config/kiem-phieu-cert.crt
+config/gemini_key.txt
+
+# Model lớn: tải bằng tools/setup_models.sh
+tools/models/crnn_vi_cinnamon.hdf5
+tools/models/vgg_transformer.pth
+tools/models/mnist/
+tools/models/digits_cnn_*.pt
+tools/models/digit_labels.json
+
+.claude/

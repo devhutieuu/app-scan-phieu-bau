@@ -1,0 +1,6 @@
+# Môi trường .venv-tf: dịch vụ CRNN đọc họ tên (cổng 8768)
+tensorflow
+keras
+h5py
+numpy
+opencv-python-headless

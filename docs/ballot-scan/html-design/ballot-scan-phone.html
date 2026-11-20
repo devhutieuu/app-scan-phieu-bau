@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title>Quét phiếu</title>
+<style>
+:root{
+  --void:#ffffff;--carbon:#f7f8f8;--obsidian:#f2f3f4;--graphite:#e5e5e6;--smoke:#d0d6e0;
+  --ash:#8a8f98;--fog:#62666d;--mist:#23252a;--paper:#08090a;--lime:#e4f222;--pulse:#27a644;--coral:#eb5757;--iris:#6366f1;
+  /* chữ trên badge ở nền sáng: sắc đậm của Pulse Green / Coral Red (DESIGN.md) */
+  --green:#1f7a35;--red:#b93c3c;
+  --font:'Inter Variable','Inter',ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --mono:'Berkeley Mono','JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--void);color:var(--mist);font-family:var(--font);font-size:15px;line-height:1.5;
+  font-feature-settings:"cv01" on,"ss03" on,"zero" on;-webkit-font-smoothing:antialiased}
+button,input{font:inherit;color:inherit}
+.app{display:flex;flex-direction:column;height:100dvh}
+.bar{display:flex;align-items:center;gap:10px;padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top));border-bottom:1px solid var(--graphite)}
+.bar b{font-weight:510;color:var(--paper)}
+.bar .st{font-size:13px;color:var(--fog)}
+.bar .st.off{color:var(--red);font-weight:510}
+.bar .sp{flex:1}
+.bar .cnt{font-size:13px;color:var(--fog);font-variant-numeric:tabular-nums}
+.link{background:none;border:0;padding:0;color:var(--fog);text-decoration:underline;font-size:13px}
+.view{flex:1;min-height:0;position:relative}
+.foot{display:flex;gap:8px;padding:12px 16px;padding-bottom:max(12px,env(safe-area-inset-bottom));border-top:1px solid var(--graphite);background:var(--void)}
+.btn{flex:1;border:1px solid var(--graphite);background:var(--void);border-radius:12px;padding:14px 8px;font-size:15px;font-weight:510;color:var(--mist);white-space:nowrap}
+.btn:disabled{color:var(--ash)}
+.btn-primary{background:var(--lime);border-color:var(--lime);color:#08090a;flex:1.4}
+.btn-primary:disabled{background:var(--graphite);border-color:var(--graphite);color:var(--ash)}
+.btn-primary.btn-danger:not(:disabled){background:var(--coral);border-color:var(--coral);color:#fff}
+.btn-text{flex:0 0 auto;border-color:transparent;color:var(--fog);font-weight:400}
+
+/* camera */
+.cam{position:absolute;inset:0;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.cam video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.guide{position:absolute;inset:6% 7%;border:2px dashed rgba(255,255,255,.6);border-radius:6px;pointer-events:none;transition:opacity .2s}
+.guide.hide{opacity:0}
+.ov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.ov polygon{fill:none;stroke:#fff;stroke-width:3;stroke-linejoin:round;transition:fill .2s}
+.ov polygon.ok{stroke:var(--pulse);stroke-width:5;fill:rgba(39,166,68,.14)}
+.ov polygon.go{fill:rgba(39,166,68,.32)}
+.ov circle{fill:#fff;stroke:#08090a;stroke-width:2}
+.hud{position:absolute;left:12px;right:12px;bottom:12px;background:rgba(8,9,10,.72);color:#fff;border-radius:12px;padding:10px 14px;font-size:14px}
+.hud b{display:block;font-weight:510;font-size:15px}
+.flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .35s}
+.flash.on{opacity:.6;transition:none}
+.mask{position:absolute;inset:0;background:rgba(255,255,255,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:24px}
+.mask b{font-size:20px;font-weight:510;color:var(--paper)}
+
+/* review */
+.rev{position:absolute;inset:0;overflow:auto;padding:14px 16px 160px}
+.rev h2{margin:0 0 2px;font-size:20px;font-weight:510;color:var(--paper);letter-spacing:-.012em}
+.rev h2{margin-bottom:12px}
+.rev h2 .rs{font-size:13px;font-weight:400;color:var(--fog);letter-spacing:0}
+.concl{border-radius:12px;padding:12px 14px;margin-bottom:12px;font-weight:510;font-size:15px}
+.concl.ok{background:rgba(39,166,68,.12);color:var(--green)}.concl.bad{background:rgba(235,87,87,.12);color:var(--red)}.concl.blank{background:var(--obsidian);color:var(--fog)}
+.concl span{display:block;font-weight:400;font-size:13px;margin-top:2px}
+.warn{background:rgba(235,87,87,.08);border:1px solid rgba(235,87,87,.35);border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:14px}
+.warn .acts{display:flex;gap:8px;margin-top:10px}
+.warn .btn{padding:10px;font-size:14px}
+.row{border:1px solid var(--graphite);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.row.doubt{background:var(--obsidian);border:1px dashed var(--fog)}
+.row.void{background:rgba(235,87,87,.08);border-color:rgba(235,87,87,.35)}
+.row .top{display:flex;align-items:baseline;gap:10px}
+.row .ln{font-size:13px;color:var(--ash);width:18px;text-align:right;font-variant-numeric:tabular-nums}
+.row .top{align-items:center}
+.sttin{flex:0 0 auto;font-family:var(--mono);font-size:22px;width:92px;min-height:48px;box-sizing:border-box;background:#fff;color:var(--paper);border:1.5px solid var(--ash);border-radius:6px;letter-spacing:.15em;text-align:center;padding:0 4px;outline:none;-webkit-appearance:none;appearance:none}
+.sttin:focus{border-color:var(--iris);box-shadow:0 0 0 3px rgba(99,102,241,.2)}
+.sttin.ed{border-left:4px solid var(--iris)}
+.row .usn,.row .rst{background:none;border:0;padding:6px 0;color:var(--mist);text-decoration:underline;font-size:13px}
+.row .nm{flex:1;min-width:0}
+.row .del{flex:0 0 auto;background:none;border:1px solid var(--graphite);border-radius:6px;min-height:40px;padding:0 10px;color:var(--fog);font-size:13px;font-weight:600}
+.row img.crop{cursor:pointer}
+.row .nm{font-size:15px;color:var(--paper)}
+.row .note{font-size:12px;color:var(--fog);margin-top:4px}
+.row img{display:block;width:100%;margin-top:8px;border-radius:6px;border:1px solid var(--graphite)}
+.empty{font-size:13px;color:var(--fog);margin:4px 0 12px}
+.page{display:block;width:100%;border-radius:6px;border:1px solid var(--graphite);margin-top:8px}
+
+/* setup */
+.setup{padding:28px 20px;display:flex;flex-direction:column;gap:12px}
+.setup h1{font-size:24px;font-weight:510;margin:0;color:var(--paper);letter-spacing:-.012em}
+.setup input{border:1px solid var(--smoke);border-radius:12px;padding:14px;font-size:17px}
+.setup p{margin:0;color:var(--fog);font-size:14px}
+
+.toast{position:fixed;left:16px;right:16px;bottom:calc(84px + env(safe-area-inset-bottom));background:#08090a;color:#fff;border-radius:12px;padding:12px 14px;font-size:14px;
+  opacity:0;transform:translateY(8px);transition:.2s;pointer-events:none;z-index:9}
+.toast.show{opacity:1;transform:none}
+/* cờ nhờ máy tính duyệt (cho cả tờ phiếu) */
+.flagbtn{display:block;width:100%;margin:4px 0 4px;background:none;border:1px dashed var(--smoke);border-radius:12px;padding:12px 14px;text-align:center;font-size:14px;color:var(--fog)}
+.flagbtn.on{border:1px solid var(--mist);background:var(--obsidian);color:var(--paper);font-weight:510}
+.zoom{position:fixed;inset:0;background:rgba(8,9,10,.92);z-index:10;overflow:auto;display:flex;align-items:flex-start;justify-content:center}
+.zoom img{width:100%;max-width:900px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="bar"><b id="stn"></b><span class="st" id="conn"></span><span class="sp"></span><span class="cnt" id="cnt"></span></div>
+  <div class="view" id="view"></div>
+  <div class="foot" id="foot"></div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+/* Trang quét phiếu cho điện thoại. Mọi xử lý nặng (nắn phiếu, đọc STT, phát hiện trùng, kho phiếu chung) nằm ở máy chủ
+   trên Mac (tools/ocr_server.py). Điện thoại: tự dò 4 góc + tự chụp -> xem kết quả đọc -> Chấp nhận hoặc Không hợp lệ.
+   Phiếu ghi đúng cấu trúc của trang máy tính (ballot-scan-prototype.html) để máy Mac xem, sửa, xuất Excel được. */
+const $=s=>document.querySelector(s);
+const pad=n=>String(n).padStart(3,'0');
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function fnv(str){let h=0x811c9dc5;for(let i=0;i<str.length;i+=7){h^=str.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0}return h.toString(16).padStart(8,'0')}
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const API=location.origin;
+
+// Khổ phiếu (mm) — giống trang máy tính, dùng để cắt ảnh từng dòng cho người quét so họ tên.
+const PG={w:210,ty:62,rh:12,ch:10,tx:20,lnw:8,cw:9,gap:3,nw:128};PG.sx=PG.tx+PG.lnw+PG.gap;PG.nx=PG.sx+3*PG.cw+PG.gap;
+const rowY=i=>PG.ty+i*PG.rh+(PG.rh-PG.ch)/2;
+
+const S={station:localStorage.getItem('kp-station')||'',cfg:null,cands:new Map(),locked:null,epoch:null,rev:0,nos:new Set(),
+  ok:false,mode:'cam',cur:null,busy:false,unsent:JSON.parse(localStorage.getItem('kp-unsent')||'[]')};
+const hdr=()=>({'Content-Type':'application/json','X-Station':encodeURIComponent(S.station)});
+let toastT;function toast(m,ms=3500){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),ms)}
+
+/* ---------- đồng bộ với máy chủ ---------- */
+async function sync(){
+  try{
+    const st=await (await fetch(`${API}/state?since=${S.rev}${S.epoch?'&epoch='+S.epoch:''}`,{cache:'no-store',headers:S.station?{'X-Station':encodeURIComponent(S.station)}:{}})).json();
+    if(st.full)S.nos=new Set();
+    st.ballots.forEach(b=>S.nos.add(b.no));
+    S.cfg=st.cfg;S.locked=st.locked;S.epoch=st.epoch;S.rev=st.rev;
+    if(st.cands)S.cands=new Map(st.cands.map(c=>[+c.stt,c]));
+    S.ok=true;
+    for(const b of [...S.unsent])await send(b,true);
+  }catch(e){S.ok=false}
+  bar();
+}
+function bar(){
+  $('#stn').textContent=S.station||'Quét phiếu';
+  const c=$('#conn');c.textContent=S.ok?'':'Mất kết nối';c.className='st'+(S.ok?'':' off');
+  $('#cnt').textContent=(S.unsent.length?`chưa gửi ${S.unsent.length} · `:'')+`${S.nos.size} phiếu`+(S.locked?' · đã chốt':'');
+}
+async function send(b,retry){
+  try{
+    const r=await fetch(API+'/ballot',{method:'POST',headers:hdr(),body:JSON.stringify({ballot:b})});const j=await r.json();
+    if(r.ok||r.status===409||r.status===423){
+      S.unsent=S.unsent.filter(x=>x.no!==b.no);
+      if(r.ok)S.nos.add(b.no);else toast(j.error||'Máy chủ không nhận phiếu',6000);
+    }
+  }catch(e){if(!retry){S.unsent.push(b);toast(`Mất mạng: phiếu #${pad(b.no)} lưu tạm trên máy, sẽ tự gửi khi nối lại.`,6000)}}
+  localStorage.setItem('kp-unsent',JSON.stringify(S.unsent));bar();
+}
+
+/* ---------- quy tắc phiếu (giống trang máy tính; máy Mac tính lại khi nhận) ---------- */
+function evalRow(r){
+  if(!r.stt)return nameCheck(r,{status:'empty',warn:r.nameInk?'Có chữ ở ô họ tên nhưng không có STT':''});
+  const c=S.cands.get(+r.stt);
+  if(!c)return{status:'void',reason:'STT không có trong danh sách'};
+  return nameCheck(r,{status:'ok',c,warn:!r.nameInk?'Ô họ tên có vẻ để trống':''});
+}
+// Kiểm chéo tên: máy chủ gửi r.nm.top = STT của 3 người có tên khớp chữ viết nhất. STT đang ghi không nằm trong 2 người đầu thì báo + gợi ý.
+function nameCheck(r,v){
+  const top=r.nm?r.nm.top.map(Number).filter(t=>S.cands.get(t)):[];
+  if(!top.length||(v.status!=='empty'&&top.slice(0,2).includes(+r.stt)))return v;
+  const c0=S.cands.get(top[0]);
+  // Máy không chắc tên là ai (chữ khó đọc hoặc tên ngoài danh sách): chỉ báo không khớp + chữ máy đọc được, không mời đổi STT.
+  if(r.nm.sure===false)return{...v,warn:`${v.status==='empty'?'Chưa có STT':`Tên viết không khớp STT ${r.stt}`}. Máy đọc tên là "${r.nm.read||'?'}", không chắc là ai trong danh sách (có thể tên ngoài danh sách)`};
+  return{...v,suggest:c0.stt,warn:v.status==='empty'?`Chưa có STT. Tên viết giống ${pad(c0.stt)} ${c0.name}`:`Tên viết giống ${pad(c0.stt)} ${c0.name}, không khớp STT ${r.stt}`};
+}
+function compute(b){
+  const seats=b.rows.length,cnt={};const evs=b.rows.map(evalRow);let voids=0;
+  evs.forEach(e=>{if(e.status==='ok')cnt[e.c.stt]=(cnt[e.c.stt]||0)+1;if(e.status==='void')voids++});
+  const ds=Object.keys(cnt).map(Number).sort((a,c)=>a-c);let reason=null;
+  if(ds.some(s=>cnt[s]>1))reason=`Ghi trùng: ${ds.filter(s=>cnt[s]>1).map(pad).join(', ')}`;
+  else if(ds.length>seats)reason='Chọn quá số người tối đa';
+  if(b.manualInvalid)reason=b.manualInvalid.reason;
+  const status=reason?'invalid':(ds.length||voids)?'valid':'blank';
+  return{status,reason,votes:reason?[]:ds,evs};
+}
+
+/* ---------- camera ---------- */
+const video=document.createElement('video');video.playsInline=true;video.muted=true;video.autoplay=true;
+let stream=null,wake=null;
+async function startCam(){
+  if(stream)return;
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:3840},height:{ideal:2160}}});
+    video.srcObject=stream;await video.play();
+  }catch(e){stream=null}  // khung camera tự báo "Chưa mở được camera"
+  render();
+}
+async function keepAwake(){try{if('wakeLock' in navigator&&!wake){wake=await navigator.wakeLock.request('screen');wake.onrelease=()=>wake=null}}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')keepAwake()});
+function snap(){
+  const vw=video.videoWidth,vh=video.videoHeight;if(!vw)return null;
+  const s=Math.min(1,2400/Math.max(vw,vh)),c=document.createElement('canvas');c.width=Math.round(vw*s);c.height=Math.round(vh*s);
+  c.getContext('2d').drawImage(video,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.85);
+}
+function beep(){try{const a=beep.a||(beep.a=new AudioContext()),o=a.createOscillator(),g=a.createGain();o.frequency.value=1046;g.gain.setValueAtTime(.08,a.currentTime);g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+.16);o.connect(g).connect(a.destination);o.start();o.stop(a.currentTime+.17)}catch(e){}}
+
+/* ---------- tự dò 4 góc phiếu ----------
+   Gửi khung hình nhỏ lên máy chủ vài lần/giây để dò 4 ô vuông góc. Đủ 4 góc thì viền xanh bám tờ phiếu;
+   viền đứng yên STABLE lần liên tiếp thì tự chụp ảnh nét và đọc. Sau khi chụp, phải bỏ tờ phiếu ra khỏi khung
+   (mất góc) mới tự chụp tờ tiếp theo, để không chụp lại đúng tờ vừa quét. Quét lại phiếu cũ thì không cần. */
+const DET={on:false,quad:null,pts:[],n:0,stable:0,armed:true,until:0,last:null,small:false};
+const STABLE=3,MOVE=0.018,MIN_AREA=0.18;
+function quadArea(q){let a=0;for(let i=0;i<4;i++){const[x1,y1]=q[i],[x2,y2]=q[(i+1)%4];a+=x1*y2-x2*y1}return Math.abs(a)/2}
+async function detectLoop(){
+  if(DET.on)return;DET.on=true;
+  const c=document.createElement('canvas');
+  while(true){
+    const t0=Date.now();
+    if(S.mode==='cam'&&!S.busy&&stream&&video.videoWidth&&document.visibilityState==='visible'&&S.ok&&!S.locked){
+      try{
+        const vw=video.videoWidth,vh=video.videoHeight,k=Math.min(1,800/Math.max(vw,vh));
+        c.width=Math.round(vw*k);c.height=Math.round(vh*k);c.getContext('2d').drawImage(video,0,0,c.width,c.height);
+        const blob=await new Promise(r=>c.toBlob(r,'image/jpeg',.7));
+        const d=await (await fetch(API+'/detect',{method:'POST',headers:{'Content-Type':'image/jpeg'},body:blob})).json();
+        onDetect(d);
+      }catch(e){onDetect({n:0})}
+    }else if(DET.quad||DET.pts.length){onDetect({n:0})}
+    await wait(Math.max(60,160-(Date.now()-t0)));
+  }
+}
+function onDetect(d){
+  if(S.mode!=='cam'||S.busy){DET.quad=null;DET.pts=[];DET.stable=0;drawOv();return}
+  const q=d.quad||null;
+  DET.n=d.n||0;DET.pts=d.pts||[];DET.small=false;
+  if(!q){DET.quad=null;DET.stable=0;DET.armed=true;drawOv();hud();return}
+  const moved=DET.quad?Math.max(...q.map((p,i)=>Math.max(Math.abs(p[0]-DET.quad[i][0]),Math.abs(p[1]-DET.quad[i][1])))):1;
+  DET.quad=q;DET.small=quadArea(q)<MIN_AREA;
+  DET.stable=moved<MOVE&&!DET.small?DET.stable+1:0;
+  drawOv();hud();
+  if(DET.stable>=STABLE&&DET.armed&&Date.now()>DET.until){DET.armed=false;DET.stable=0;capture()}
+}
+function drawOv(){
+  const cam=document.querySelector('.cam'),svg=cam?.querySelector('.ov');if(!svg)return;
+  const W=cam.clientWidth,H=cam.clientHeight,vw=video.videoWidth||1,vh=video.videoHeight||1;
+  const k=Math.max(W/vw,H/vh),ox=(W-vw*k)/2,oy=(H-vh*k)/2,P=([x,y])=>`${(ox+x*vw*k).toFixed(1)},${(oy+y*vh*k).toFixed(1)}`;
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const ready=DET.quad&&!DET.small&&DET.armed;
+  svg.innerHTML=DET.quad?`<polygon class="${ready?'ok':''} ${ready&&DET.stable>=1?'go':''}" points="${DET.quad.map(P).join(' ')}"/>`
+    :DET.pts.map(p=>{const[x,y]=P(p).split(',');return`<circle cx="${x}" cy="${y}" r="9"/>`}).join('');
+  cam.querySelector('.guide')?.classList.toggle('hide',!!DET.quad);
+}
+function hud(){
+  const h=document.querySelector('.cam .hud');if(!h||S.mode!=='cam')return;
+  const re=S.cur,t=re?`Quét lại phiếu #${pad(re.no)}`:'Đặt phiếu vào khung';
+  h.innerHTML=!stream?'<b>Chưa mở được camera</b>Cho phép dùng camera rồi tải lại trang.':
+    !S.ok?'<b>Mất kết nối máy chủ</b>Kiểm tra Wi-Fi.':
+    S.locked?'<b>Phiên đã chốt</b>':
+    S.busy?'<b>Đang đọc phiếu…</b>':
+    DET.quad&&!DET.armed?'<b>Xong</b>Đặt tờ tiếp theo.':
+    DET.quad&&DET.small?'<b>Đưa máy lại gần hơn</b>':
+    DET.quad?'<b>Giữ yên…</b>':
+    DET.n?`<b>Thấy ${DET.n}/4 góc</b>`:
+    `<b>${t}</b>Đủ 4 góc là tự chụp.`;
+}
+addEventListener('resize',drawOv);
+
+async function capture(){
+  if(S.busy)return;keepAwake();
+  if(S.locked)return toast('Phiên đã chốt kết quả, không nhận thêm phiếu.');
+  if(!S.ok)return toast('Mất kết nối máy chủ. Kiểm tra Wi-Fi rồi chụp lại.');
+  const photo=snap();if(!photo)return toast('Camera chưa sẵn sàng.');
+  DET.armed=false;DET.stable=0;  // tờ này đã chụp: chờ lấy ra mới tự chụp tờ tiếp
+  beep();const f=$('.flash');if(f){f.classList.add('on');setTimeout(()=>f.classList.remove('on'),30)}
+  const re=S.cur&&S.mode==='cam'?S.cur:null;  // đang quét lại phiếu cũ
+  S.busy=true;render();
+  try{
+    const r=await (await fetch(API+'/read',{method:'POST',headers:hdr(),body:JSON.stringify({image:photo,engine:'none',stts:[...S.cands.keys()],no:re?.no})})).json();
+    if(r.error)throw new Error(r.error);
+    if(!r.aligned){S.busy=false;DET.armed=true;DET.until=Date.now()+800;render();return toast('Không thấy đủ 4 góc phiếu. Đưa trọn tờ phiếu vào khung rồi chụp lại.',5000)}
+    // Số in trên giấy (góc trên phải) là mã phiếu. Không đọc được thì chụp lại 2 lần, vẫn không được mới cấp mã tạm.
+    const sheet=r.sheet??null;
+    if(re&&re.sheet&&sheet&&sheet!==re.sheet){S.busy=false;DET.armed=true;DET.until=Date.now()+1500;render();return toast(`Tờ đang đặt là phiếu số ${pad(sheet)}, không phải phiếu #${pad(re.no)} đang quét lại.`,6000)}
+    if('sheet' in r&&!sheet&&(S.miss=(S.miss||0)+1)<3){S.busy=false;DET.armed=true;DET.until=Date.now()+1200;render();return toast('Chưa đọc được số phiếu ở góc trên phải. Đừng che góc đó, máy sẽ chụp lại.',5000)}
+    S.miss=0;
+    const no=sheet??(re&&!re.sheet?re.no:(await (await fetch(API+'/next',{method:'POST',headers:hdr(),body:'{}'})).json()).no);
+    const n=r.rows.length||18,now=Date.now();  // số dòng theo mẫu phiếu máy chủ đang đọc
+    const rows=Array.from({length:n},(_,i)=>{const o=r.rows[i]||{stt:''};return{line:i+1,ocr:o,stt:o.stt||'',unread:!!o.unreadable&&!o.stt,nameInk:!!o.nameInk,o0:{stt:o.stt||''}}});
+    const hist=re?re.history:[{t:now,text:'Chụp bằng điện thoại'}];
+    hist.push({t:now,text:(re?`Quét lại lần ${re.rescans+1}, `:'')+`Máy đọc STT (${r.ms} ms)`});
+    if('sheet' in r&&!sheet)hist.push({t:now,text:'Không đọc được số phiếu in trên giấy, máy cấp mã tạm'});
+    if(r.dupOf)hist.push({t:now,text:r.dupOf.exact?`Cảnh báo: phiếu số ${pad(r.dupOf.no)} đã ghi nhận rồi (${r.dupOf.station})`:`Cảnh báo: giống phiếu #${pad(r.dupOf.no)} đã ghi nhận (${r.dupOf.station})`});
+    S.cur={no,sheet,station:S.station,source:'camera',aligned:true,capturedAt:now,photo:r.page,hash:fnv(r.page),scanId:r.scan,rows,
+      manualInvalid:null,rescans:re?re.rescans+1:0,version:1,history:hist,ocrEngine:'none',dupOf:r.dupOf||null,dupOk:false,crops:null,flagOn:!!re?.flagOn,below:r.below||null,belowOk:false};
+    if(r.names==='wait'&&r.scan)pollNames(S.cur,r.scan);
+    S.mode='rev';cropRows(S.cur);
+  }catch(e){DET.armed=true;DET.until=Date.now()+1500;toast('Máy chủ đọc lỗi: '+(e.message||e)+'. Máy sẽ tự chụp lại.',6000)}
+  S.busy=false;render();
+}
+// Kiểm chéo tên chạy nền ở máy chủ; hỏi lại cho tới khi xong. Phiếu đã gửi đi / quét lại thì thôi.
+async function pollNames(b,scan){
+  for(let k=0;k<80;k++){
+    await new Promise(r=>setTimeout(r,1500));
+    if(S.cur!==b||b.scanId!==scan)return;
+    try{const j=await (await fetch(`${API}/names?scan=${scan}`,{cache:'no-store'})).json();
+      if(j.state==='wait')continue;
+      (j.rows||[]).forEach(x=>{const r=b.rows[x.line-1];if(r)r.nm={top:x.top,sure:x.sure!==false,read:x.read||''}});
+      b.history.push({t:Date.now(),text:j.state==='done'?'Máy kiểm tên xong':'Máy kiểm tên lỗi, người quét tự so tên'});
+      // đang gõ số thì chờ gõ xong mới vẽ lại, để không mất con trỏ
+      const show=()=>{if(S.cur!==b||S.mode!=='rev')return;if(document.activeElement?.classList?.contains('sttin'))return setTimeout(show,800);render()};show();return}catch(e){}
+  }
+}
+async function cropRows(b){
+  const img=new Image();img.src=b.photo;await img.decode().catch(()=>{});
+  const k=img.naturalWidth/PG.w,cw=PG.nx+PG.nw-PG.sx;
+  b.crops=b.rows.map((r,i)=>{if(!r.stt&&!r.nameInk)return null;const c=document.createElement('canvas');c.width=Math.round(cw*k);c.height=Math.round(PG.ch*k);
+    c.getContext('2d').drawImage(img,PG.sx*k,rowY(i)*k,cw*k,PG.ch*k,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.8)});
+  if(S.cur===b)render();
+}
+let PEND=null,CM=[],CMb=null;
+const sttPad=v=>{v=String(v||'').replace(/\D/g,'').slice(0,3);return v&&v.length<3?v.padStart(3,'0'):v};
+function visIdx(b){return b.rows.map((r,i)=>(r.o0.stt||r.stt||r.nameInk)?i:-1).filter(i=>i>=0)}
+/* chốt giá trị ô i; trả true nếu đã vẽ lại */
+function commitStt(i,focusIdx){
+  const b=S.cur;if(!b||!b.rows[i])return false;
+  const r=b.rows[i];r.stt=sttPad(r.stt);
+  const changed=CM[i]!==r.stt;
+  if(!changed)return false;
+  CM[i]=r.stt;PEND=focusIdx===undefined?null:focusIdx;render();return true;
+}
+function nextVis(b,i){const v=visIdx(b);const n=v.find(x=>x>i);return n===undefined?-1:n}
+function decide(ok){
+  const b=S.cur;if(!b)return;
+  if(document.activeElement&&document.activeElement.classList?.contains('sttin')){const el=document.activeElement,i=+el.dataset.i;b.rows[i].stt=sttPad(el.value);el.blur()}
+  b.rows.forEach(r=>{r.stt=sttPad(r.stt)});
+  b.rows.forEach((r,i)=>{if(r.stt!==r.o0.stt){const t=`Sửa dòng ${i+1}: máy đọc ${r.o0.stt||'trống'} → ${r.stt||'trống'}`;if(!b.history.some(h=>h.text.startsWith(`Sửa dòng ${i+1}:`)))b.history.push({t:Date.now(),text:t});else{const h=b.history.find(h=>h.text.startsWith(`Sửa dòng ${i+1}:`));h.text=t}}});
+  if(b.dupOf&&!b.dupOk)return toast('Xử lý cảnh báo phiếu trùng trước.');
+  if(b.below&&b.below.status==='ink'&&!b.belowOk)return toast('Máy thấy nét bút bên dưới dòng cuối. Chọn Phiếu không hợp lệ hoặc Không phải chữ trước.');
+  if(!ok)b.manualInvalid={reason:'Người quét đánh dấu không hợp lệ'};
+  if(b.flagOn){b.flag={note:'',by:S.station,at:Date.now(),done:null};b.history.push({t:b.flag.at,text:'Gắn cờ nhờ máy tính duyệt'})}
+  else b.flag=null;
+  const c=compute(b);b.status=c.status;b.reason=c.reason;b.votes=c.votes;b.decidedAt=Date.now();
+  b.history.push({t:b.decidedAt,text:ok?`Chấp nhận (${label(c).t})`:'Không hợp lệ'});
+  const out={...b};delete out.crops;delete out.dupOk;delete out.flagOn;
+  S.cur=null;S.mode='cam';DET.quad=null;DET.stable=0;DET.until=Date.now()+700;render();send(out);
+  toast(`Đã lưu phiếu #${pad(b.no)} · ${ok?label(c).t:'Không hợp lệ'}${b.flag?' · ⚑':''}`);
+}
+function label(c){
+  if(c.status==='valid')return{cls:'ok',t:`Hợp lệ · ${c.votes.length} người được bầu`};
+  if(c.status==='blank')return{cls:'blank',t:'Phiếu trắng'};
+  return{cls:'bad',t:'Không hợp lệ · '+c.reason};
+}
+
+/* ---------- vẽ ---------- */
+function render(){
+  bar();const v=$('#view'),f=$('#foot');
+  if(!S.station){
+    v.innerHTML=`<div class="setup"><h1>Tên máy này</h1>
+      <input id="nm" placeholder="ĐT 1" autocomplete="off"></div>`;
+    f.innerHTML=`<button class="btn btn-primary" id="go">Bắt đầu quét</button>`;
+    $('#go').onclick=()=>{S.station=$('#nm').value.trim()||'ĐT 1';localStorage.setItem('kp-station',S.station);keepAwake();startCam();render()};
+    return;
+  }
+  if(S.mode==='cam'){
+    if(!v.querySelector('.cam')){v.innerHTML=`<div class="cam"></div>`;v.firstChild.append(video);v.firstChild.insertAdjacentHTML('beforeend','<div class="guide"></div><svg class="ov"></svg><div class="flash"></div><div class="hud"></div>');video.play().catch(()=>{})}
+    const re=S.cur;
+    hud();drawOv();detectLoop();
+    v.querySelector('.mask')?.remove();
+    if(S.busy)v.firstChild.insertAdjacentHTML('beforeend','<div class="mask"><b>Đang đọc phiếu…</b></div>');
+    f.innerHTML=(re?`<button class="btn btn-text" id="cancelRe">Hủy</button>`:'')+`<button class="btn" id="shot" ${S.busy||!stream?'disabled':''}>Chụp tay</button>`;
+    $('#shot').onclick=capture;
+    if(re)$('#cancelRe').onclick=()=>{S.mode='rev';render()};
+    return;
+  }
+  const b=S.cur,c=compute(b),L=label(c);
+  if(CMb!==b||CM.length!==b.rows.length){CMb=b;CM=b.rows.map(r=>r.stt)}
+  const rows=b.rows.map((r,i)=>({r,i,e:c.evs[i]})).filter(x=>x.r.o0.stt||x.r.stt||x.r.nameInk);
+  v.innerHTML=`<div class="rev">
+    <h2>Phiếu #${pad(b.no)}${b.rescans?` <span class="rs">quét lại ${b.rescans}</span>`:''}</h2>
+    ${b.dupOf&&!b.dupOk?(b.dupOf.exact?`<div class="warn"><b>Phiếu số ${pad(b.dupOf.no)} đã ghi nhận rồi</b> (${esc(b.dupOf.station||'máy khác')}). Tờ này đã quét, không tính lần 2.
+      <div class="acts"><button class="btn" id="dupDrop">Bỏ, phiếu trùng</button></div></div>`:`<div class="warn"><b>Giống phiếu #${pad(b.dupOf.no)}</b> (${esc(b.dupOf.station||'máy khác')}) — có thể quét 2 lần.
+      <div class="acts"><button class="btn" id="dupDrop">Bỏ, phiếu trùng</button><button class="btn" id="dupOk">Không trùng</button></div></div>`):''}
+    ${b.below&&b.below.status==='ink'&&!b.belowOk?`<div class="warn"><b>Có nét bút bên dưới dòng cuối.</b> Xem phần dưới của ảnh phiếu: nếu là chữ ghi thêm thì phiếu không hợp lệ.
+      <div class="acts"><button class="btn" id="belowBad">Phiếu không hợp lệ</button><button class="btn" id="belowOk">Không phải chữ</button></div></div>`:''}
+    <div class="concl ${L.cls}">${esc(L.t)}<span>${c.status==='valid'?c.votes.map(pad).join(' · '):c.status==='blank'?'Không chọn ai':'Cả phiếu không được tính'}</span></div>
+    ${rows.length?rows.map(({r,i,e})=>{
+      const edited=r.stt!==r.o0.stt;
+      const doubt=!edited&&e.status==='ok'&&r.ocr?.sttConf!=null&&r.ocr.sttConf<.7;
+      return`<div class="row ${e.status==='void'?'void':doubt||e.warn?'doubt':''}"><div class="top"><span class="ln">${i+1}</span><input class="sttin${edited?' ed':''}" data-i="${i}" value="${esc(r.stt)}" maxlength="3" inputmode="numeric" pattern="[0-9]*" placeholder="···" autocomplete="off" enterkeyhint="next" aria-label="Số thứ tự dòng ${i+1}">
+        <span class="nm">${e.status==='ok'?esc(e.c.name):e.status==='void'?'Không có trong danh sách':'—'}</span>${r.stt?`<button class="del" data-i="${i}" aria-label="Xóa dòng ${i+1}">Xóa dòng</button>`:''}</div>
+        ${edited&&r.ocr?`<div class="note">Máy đọc ${esc(r.o0.stt||'trống')} · <button class="rst" data-i="${i}">Hoàn tác</button></div>`:''}${e.warn?`<div class="note">${esc(e.warn)}${e.suggest?` · <button class="usn" data-i="${i}">Đổi sang ${pad(e.suggest)}</button>`:''}</div>`:''}
+        ${b.crops?.[i]?`<img class="crop" data-fi="${i}" src="${b.crops[i]}" alt="Dòng ${i+1} trên phiếu">`:''}</div>`}).join(''):'<div class="empty">Không có dòng nào được điền.</div>'}
+    <button class="flagbtn${b.flagOn?' on':''}" id="flagT" aria-pressed="${!!b.flagOn}">⚑ ${b.flagOn?'Đã gắn cờ · bấm để bỏ':'Gắn cờ nhờ máy tính duyệt'}</button>
+    <img class="page" id="pg" src="${b.photo}" alt="Ảnh phiếu đã nắn thẳng">
+  </div>`;
+  f.innerHTML=`<button class="btn btn-text" id="re">Quét lại</button>${c.status==='invalid'?'':`<button class="btn" id="bad">Không hợp lệ</button>`}<button class="btn btn-primary${c.status==='invalid'?' btn-danger':''}" id="ok" ${b.dupOf&&!b.dupOk?'disabled':''}>${c.status==='invalid'?'Đúng, không hợp lệ':'Chấp nhận'}</button>`;
+  $('#re').onclick=()=>{S.mode='cam';DET.armed=true;DET.quad=null;DET.stable=0;DET.until=Date.now()+600;render()};
+  if($('#bad'))$('#bad').onclick=()=>decide(false);$('#ok').onclick=()=>decide(true);
+  $('#pg').onclick=()=>{const z=document.createElement('div');z.className='zoom';z.innerHTML=`<img src="${b.photo}">`;z.onclick=()=>z.remove();document.body.append(z)};
+  v.querySelectorAll('.sttin').forEach(el=>{
+    const i=+el.dataset.i;
+    el.onfocus=()=>setTimeout(()=>{try{el.select()}catch(_){}},0);
+    el.oninput=()=>{
+      const d=el.value.replace(/\D/g,'').slice(0,3);if(el.value!==d)el.value=d;
+      b.rows[i].stt=d;
+      // Không tự nhảy dòng khi đủ 3 số (từng làm phím gõ tiếp đè mất số dòng dưới). Sang dòng kế: nút "Tiếp"/Enter trên bàn phím, hoặc chạm ô khác.
+    };
+    el.onblur=ev=>{
+      const rt=ev.relatedTarget,nx=rt&&rt.classList&&rt.classList.contains('sttin')?+rt.dataset.i:null;
+      commitStt(i,nx);
+    };
+    el.onkeydown=ev=>{if(ev.key==='Enter'){ev.preventDefault();const n=nextVis(b,i);b.rows[i].stt=sttPad(el.value);if(!commitStt(i,n)){if(n>=0){const x=v.querySelector(`.sttin[data-i="${n}"]`);x&&x.focus()}else el.blur()}}};
+  });
+  v.querySelectorAll('img.crop').forEach(im=>im.onclick=()=>{const x=v.querySelector(`.sttin[data-i="${im.dataset.fi}"]`);if(x){x.focus();x.scrollIntoView({block:'center',behavior:'smooth'})}});
+  // Xóa dòng: bỏ số của dòng này (dòng không còn được tính); "Hoàn tác" trả lại số máy đọc.
+  v.querySelectorAll('.del').forEach(bt=>bt.onclick=()=>{const i=+bt.dataset.i;b.rows[i].stt='';CM[i]='';PEND=null;render()});
+  v.querySelectorAll('.usn').forEach(bt=>bt.onclick=()=>{const i=+bt.dataset.i,e=evalRow(b.rows[i]);if(!e.suggest)return;b.history.push({t:Date.now(),text:`Dòng ${i+1}: đổi STT ${b.rows[i].stt||'trống'} → ${pad(e.suggest)} theo tên viết`});b.rows[i].stt=pad(e.suggest);CM[i]=b.rows[i].stt;PEND=null;render()});
+  v.querySelectorAll('.rst').forEach(bt=>bt.onclick=()=>{const i=+bt.dataset.i;b.rows[i].stt=b.rows[i].o0.stt;CM[i]=b.rows[i].stt;PEND=null;render()});
+  if(PEND!==null){const p=PEND;PEND=null;if(p>=0){const el=v.querySelector(`.sttin[data-i="${p}"]`);if(el){el.focus();setTimeout(()=>{try{el.select()}catch(_){}},0)}}}
+  $('#flagT').onclick=()=>{b.flagOn=!b.flagOn;render()};
+  if($('#belowOk'))$('#belowOk').onclick=()=>{b.belowOk=true;b.history.push({t:Date.now(),text:'Người quét xác nhận: không có chữ ghi dưới dòng cuối'});render()};
+  if($('#belowBad'))$('#belowBad').onclick=()=>{b.belowOk=true;b.manualInvalid={reason:'Ghi ngoài ô (bên dưới dòng cuối)'};b.history.push({t:Date.now(),text:'Phiếu hỏng: ghi ngoài ô (bên dưới dòng cuối)'});decide(true)};
+  if($('#dupOk'))$('#dupOk').onclick=()=>{b.dupOk=true;b.history.push({t:Date.now(),text:'Người quét xác nhận: không trùng'});render()};
+  if($('#dupDrop'))$('#dupDrop').onclick=()=>{S.cur=null;S.mode='cam';DET.quad=null;DET.stable=0;DET.until=Date.now()+700;render();toast(`Đã bỏ phiếu #${pad(b.no)}, không tính. Cất tờ giấy này riêng.`,5000)};
+}
+$('#stn').onclick=()=>{const n=prompt('Tên máy này',S.station);if(n&&n.trim()){S.station=n.trim();localStorage.setItem('kp-station',S.station);bar()}};
+
+render();sync();setInterval(sync,2000);if(S.station)startCam();
+</script>
+</body>
+</html>
