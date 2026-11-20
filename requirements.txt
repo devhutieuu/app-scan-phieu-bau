@@ -9,6 +9,7 @@ vietocr
 pymupdf
 python-docx
 reportlab
-# Apple Vision (chỉ macOS)
-pyobjc-framework-Cocoa
-pyobjc-framework-Vision
+cryptography  # tools/make_cert.py (Windows)
+# Apple Vision (chỉ macOS, Windows tự bỏ qua)
+pyobjc-framework-Cocoa; sys_platform == "darwin"
+pyobjc-framework-Vision; sys_platform == "darwin"

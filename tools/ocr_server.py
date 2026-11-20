@@ -27,8 +27,17 @@ from pathlib import Path
 
 import cv2
 import numpy as np
-import Foundation
-import Vision
+
+IS_MAC = sys.platform == "darwin"
+if IS_MAC:
+    import Foundation
+    import Vision
+else:  # Windows/Linux: không có Apple Vision, đọc chữ bằng VietOCR (xem recognize bên dưới), console cần UTF-8 để in tiếng Việt
+    for _s in (sys.stdout, sys.stderr):
+        try:
+            _s.reconfigure(encoding="utf-8")
+        except Exception:  # noqa: BLE001
+            pass
 
 ROOT = Path(__file__).resolve().parent.parent
 LAYOUT = json.loads((ROOT / "config" / "ballot_layout.json").read_text(encoding="utf-8"))
@@ -44,6 +53,8 @@ DIGIT_FIX = str.maketrans({"O": "0", "o": "0", "D": "0", "Q": "0", "l": "1", "I"
 # ---------- Apple Vision ----------
 def recognize(img_bgr, langs, correction=False, level_accurate=True):
     """Trả về list (text, confidence, x) của các dòng chữ Vision thấy trong ảnh."""
+    if not IS_MAC:
+        return _recognize_viet(img_bgr)
     ok, buf = cv2.imencode(".png", img_bgr)
     data = Foundation.NSData.dataWithBytes_length_(buf.tobytes(), len(buf))
     req = Vision.VNRecognizeTextRequest.alloc().init()
@@ -59,6 +70,16 @@ def recognize(img_bgr, langs, correction=False, level_accurate=True):
             out.append((str(cand[0].string()), float(cand[0].confidence()), float(obs.boundingBox().origin.x)))
     out.sort(key=lambda t: t[2])
     return out
+
+
+def _recognize_viet(img_bgr):
+    """Thay Apple Vision trên máy không phải Mac: VietOCR đọc cả ảnh như 1 dòng (ảnh đưa vào đều là 1 dòng chữ
+    hoặc 1 dải số STT). Chữ ký và kết quả giống recognize()."""
+    from PIL import Image
+    g = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY) if img_bgr.ndim == 3 else img_bgr
+    text, prob = vietocr_predictor().predict(Image.fromarray(g).convert("RGB"), return_prob=True)
+    text = re.sub(r"\s+", " ", text).strip()
+    return [(text, float(prob), 0.0)] if text else []
 
 
 ENGINES = {"apple-vision": recognize}
@@ -648,10 +669,14 @@ def _svc_alive(url):
         return isinstance(getattr(e, "reason", e), TimeoutError)
 
 
+QWEN_OPTIONAL = not IS_MAC  # Qwen chạy bằng MLX (chỉ chip Apple): máy khác kiểm tên bằng CRNN + VietOCR, thiếu Qwen vẫn chạy
+
+
 def name_services_up():
-    """CRNN và Qwen có đang bật không (hỏi lại sau mỗi 10 giây)."""
+    """CRNN và Qwen (Mac) có đang bật không (hỏi lại sau mỗi 10 giây)."""
     if time.time() - _SVC["t"] > 10:
-        _SVC.update(t=time.time(), ok=all(_svc_alive(u) for u in (CRNN_URL, QWEN_URL)))
+        urls = (CRNN_URL,) if QWEN_OPTIONAL else (CRNN_URL, QWEN_URL)
+        _SVC.update(t=time.time(), ok=all(_svc_alive(u) for u in urls))
     return _SVC["ok"]
 
 
@@ -787,15 +812,16 @@ def _names_viet(job):
         row = {"line": line, "fast": fast, "sure": True, "top": [code[i] for i in np.argsort(-score)[:3]]}
         job["rows"].append(row)
         if not fast:
-            job["slow"].append((row, crnn, vt, png))
+            job["slow"].append((row, crnn, vt, png, free))
     job.pop("todo")
     return bool(job["slow"])
 
 
 def _names_qwen(job):
     names, code = job["names"], job["code"]
-    for row, crnn, vt, png in job["slow"]:
-        text = _post(QWEN_URL, {"image": png}, "Qwen")["text"]
+    for row, crnn, vt, png, free in job["slow"]:
+        # Không có Qwen thì dùng chữ VietOCR tự đọc làm chữ so khớp (độ chính xác thấp hơn ghép đủ ba).
+        text = free if QWEN_OPTIONAL else _post(QWEN_URL, {"image": png}, "Qwen")["text"]
         score = nv.fuse(crnn, vt, text, names)
         # Chữ Qwen chép ra phải giống tên người đứng đầu ở mức SUGGEST_SIM thì giao diện mới mời "Đổi sang <STT>".
         # Dưới mức đó (chữ khó đọc, hoặc tên ngoài danh sách) chỉ báo không khớp và cho xem chữ máy đọc được.
@@ -1163,6 +1189,15 @@ def devices():
 def lan_ip():
     """IP máy Mac trong mạng nội bộ (Wi-Fi en0, dây en1...). Không có mạng thì trả None."""
     import subprocess
+    if not IS_MAC:
+        import socket
+        try:  # Windows/Linux: hỏi hệ điều hành địa chỉ dùng để ra mạng nội bộ (UDP không gửi gói nào thật)
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as so:
+                so.connect(("10.255.255.255", 1))
+                ip = so.getsockname()[0]
+            return None if ip.startswith("127.") else ip
+        except Exception:  # noqa: BLE001
+            return None
     for nic in ("en0", "en1", "en2", "en3"):
         try:
             ip = subprocess.run(["ipconfig", "getifaddr", nic], capture_output=True, text=True, timeout=2).stdout.strip()
@@ -1242,7 +1277,7 @@ class H(BaseHTTPRequestHandler):
         if u.path == "/qr.png":
             url = phone_url()
             if not url:
-                return self._send(503, {"error": "Máy Mac chưa nối mạng nội bộ"})
+                return self._send(503, {"error": "Máy chủ chưa nối mạng nội bộ"})
             data = qr_png(url)
             self.send_response(200)
             self.send_header("Content-Type", "image/png")
@@ -1378,9 +1413,9 @@ if __name__ == "__main__":
         ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         ctx.load_cert_chain(CERT, KEY)
         serve("0.0.0.0", HTTPS_PORT, ctx)
-        print(f"Các bàn khác mở:   https://<IP máy Mac>:{HTTPS_PORT}/  (xem IP bằng: ipconfig getifaddr en0)")
+        print(f"Các bàn khác mở:   https://<IP máy chủ>:{HTTPS_PORT}/  (xem IP: ipconfig getifaddr en0 trên Mac, ipconfig trên Windows)")
     else:
-        print("Chưa có chứng chỉ (config/cert.pem): các bàn khác chưa vào được. Chạy tools/make_cert.sh trước.")
+        print("Chưa có chứng chỉ (config/cert.pem): các bàn khác chưa vào được. Chạy tools/make_cert.sh (Mac) hoặc tools\\make_cert.ps1 (Windows) trước.")
     print(f"Kho phiếu chung: {STATE_FILE} · đã có {len(STORE.s['ballots'])} phiếu")
     try:
         while True:

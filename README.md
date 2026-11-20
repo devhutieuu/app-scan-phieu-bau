@@ -12,13 +12,13 @@ Thiết kế chi tiết: [handoff-app-scan-phieu-bau.md](handoff-app-scan-phieu-
 
 | | |
 |---|---|
-| Máy chủ | Mac chip Apple Silicon (M1 trở lên), RAM 16 GB trở lên (Qwen cần khoảng 6 GB) |
-| Hệ điều hành | macOS (dùng Apple Vision nên không chạy được trên Windows/Linux) |
+| Máy chủ | **Mac** chip Apple Silicon (M1 trở lên), RAM 16 GB trở lên (Qwen cần khoảng 6 GB), hoặc **Windows 10/11 64-bit**, RAM 16 GB (xem mục "Cài đặt trên Windows") |
+| Hệ điều hành | macOS (đầy đủ nhất) hoặc Windows (bản rút gọn, không có Qwen) |
 | Python | 3.12 (khuyên dùng [uv](https://docs.astral.sh/uv/)) |
 | Mạng | Internet chỉ cần lúc cài đặt. Ngày bầu dùng router/Wi-Fi riêng, không cần Internet |
 | Dung lượng trống | khoảng 12 GB (thư viện + model) |
 
-## Cài đặt
+## Cài đặt trên Mac
 
 Chạy 1 lần, có Internet. Dự án dùng **3 môi trường Python riêng** vì TensorFlow, PyTorch và MLX xung đột phiên bản với nhau.
 
@@ -81,7 +81,51 @@ Mạng chữ số được huấn luyện từ MNIST. Muốn huấn luyện lạ
 
 Vào **Cài đặt hệ thống → Quyền riêng tư & Bảo mật → Mạng cục bộ**, bật cho **Terminal**, rồi chạy máy chủ từ Terminal. Nếu không, điện thoại sẽ không vào được máy chủ.
 
-## Chạy
+## Cài đặt trên Windows
+
+Bản Windows dùng cùng mã nguồn, khác Mac ở 3 điểm: không có Apple Vision (VietOCR đọc thay, riêng ô STT vẫn dùng mạng CNN chữ số nên gần như không ảnh hưởng), **không có Qwen** (chỉ chạy trên chip Apple; kiểm chéo họ tên dùng CRNN + VietOCR, độ chính xác thấp hơn ghép đủ ba), và chạy hoàn toàn trên CPU nên chậm hơn Mac M1.
+
+Mở **PowerShell** và chạy lần lượt.
+
+1. Cài Python 3.12, Git và uv:
+
+```powershell
+winget install Python.Python.3.12 Git.Git astral-sh.uv
+```
+
+2. Lấy mã nguồn:
+
+```powershell
+git clone https://github.com/thienhuyuel/app-scan-phieu-bau.git
+cd app-scan-phieu-bau
+```
+
+3. Tạo môi trường chính và môi trường CRNN (không cần `.venv-mlx`):
+
+```powershell
+uv venv --python 3.12 .venv
+uv pip install --python .venv\Scripts\python.exe -r requirements.txt
+uv venv --python 3.12 .venv-tf
+uv pip install --python .venv-tf\Scripts\python.exe -r requirements-tf.txt
+```
+
+4. Tải model (VietOCR, CRNN):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\setup_models.ps1
+```
+
+5. Chạy máy chủ (lần đầu tự tạo chứng chỉ https, cho phép Windows Firewall khi được hỏi, chọn mạng riêng):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\start_prototype.ps1
+```
+
+Mở <http://localhost:8766/> trên chính máy đó, các máy khác mở `https://<IP máy>:8443/` (script in IP ra). Tạo lại chứng chỉ khi đổi IP: `.venv\Scripts\python.exe tools\make_cert.py`. Sinh phiếu in: `.venv\Scripts\python.exe tools\make_ballot.py`.
+
+> Bản Windows mới được kiểm tra bằng cách mô phỏng trên Mac (đọc STT cho kết quả giống hệt Mac trên phiếu mẫu), chưa chạy thử trên máy Windows thật.
+
+## Chạy trên Mac
 
 ```bash
 bash tools/start_prototype.sh
